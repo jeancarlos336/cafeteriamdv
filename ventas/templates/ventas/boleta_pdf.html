@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page {
+            size: A5;
+            margin: 0;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 1cm;
+            text-align: center;
+            font-size: 14pt; /* Tamaño de letra más grande */
+        }
+        .total {
+            text-align: right;
+            margin-right: 1cm;
+        }
+        .producto {
+            text-align: center;
+            width: 40%; /* Mayor espacio para la columna Producto */
+
+        }
+        
+        .cantidad, .precio, .subtotal {
+            text-align: right;
+            width: 20%; /* Menor espacio para las demás columnas */
+        }
+        .titulo {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .fecha {
+            text-align: center;
+        }
+        h1, h2, h3, p {
+            font-size: 16pt; /* Tamaño de encabezados más grande */
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+
+</head>
+<body>
+    {% load humanize %}  <!-- Aquí cargamos los filtros de humanize -->
+    <h1 class="titulo">CAFETERIA MDV</h1>
+    <p><strong>Número de Boleta: {{ venta.id_venta }}</strong></p>
+    <p><strong>Cliente: {{ venta.cliente }}</strong></p>
+    <p class="fecha">Fecha: {{ venta.fecha|date:"d-m-Y" }}</p>
+
+    <table width="100%" style="margin-top: 1cm;">
+        <thead>
+            <tr>
+                <th class="producto">Producto</th>
+                <th class="cantidad">Cant.</th>
+                <th class="precio">Precio U.</th>
+                <th class="subtotal">Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for detalle in detalles %}
+            <tr>
+                <td class="producto">{{ detalle.id_producto.nom_producto }}</td>
+                <td class="cantidad">{{ detalle.cantidad }}</td>
+                <td class="precio">{{ detalle.precio_unitario|floatformat:0 }}</td> <!-- Separador de miles y decimales -->
+                <td class="subtotal">{{ detalle.sub_total|floatformat:0 }}</td> <!-- Separador de miles y decimales -->
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h3 class="total">Total: {{ venta.total|floatformat:0 }}</h3> <!-- Total sin decimales y con separador de miles -->
+</body>
+</html>

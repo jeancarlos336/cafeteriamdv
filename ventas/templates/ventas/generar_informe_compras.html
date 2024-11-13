@@ -1,0 +1,39 @@
+<!-- generar_informe_compras.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Generar Informe de Compras</h2>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Generar Informe</button>
+</form>
+{% if compras %}
+    <h3>Resultados del Informe</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Destino</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for compra in compras %}
+                <tr>
+                    <td>{{ compra.fecha }}</td>
+                    <td>{{ compra.destino }}</td>
+                    <td>{{ compra.total }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="fecha_inicio" value="{{ form.fecha_inicio.value }}">
+        <input type="hidden" name="fecha_fin" value="{{ form.fecha_fin.value }}">
+        <input type="hidden" name="destino" value="{{ form.destino.value }}">
+        <button type="submit" name="generar_pdf" class="btn btn-danger">Generar PDF</button>
+    </form>
+{% endif %}
+{% endblock %}

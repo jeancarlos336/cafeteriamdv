@@ -1,0 +1,11 @@
+{% extends 'ventas/base.html' %}
+
+{% block content %}
+<h2>Detalle de Compra</h2>
+<p><strong>Fecha:</strong> {{ compra.fecha }}</p>
+<p><strong>Número de Boleta:</strong> {{ compra.numero_boleta }}</p>
+<p><strong>Destino:</strong> {{ compra.destino }}</p>
+<p><strong>Detalle:</strong> {{ compra.detalle }}</p>
+<p><strong>Total:</strong> {{ compra.total }}</p>
+<a href="{% url 'listar_compras' %}" class="btn btn-secondary">Volver a la lista</a>
+{% endblock %}

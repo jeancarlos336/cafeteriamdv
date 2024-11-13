@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Punto de Venta - Dashboard</title>
+   {% load static %}
+   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+   <!-- Barra de navegación -->
+   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+       <div class="container">
+           <a class="navbar-brand" href="#">Punto de Venta</a>
+           <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+               <span class="navbar-toggler-icon"></span>
+           </button>
+           <div class="collapse navbar-collapse" id="navbarNav">
+               <ul class="navbar-nav ms-auto">
+                   <li class="nav-item"><a class="nav-link" href="{% url 'crear_venta_completa' %}">Crear Venta</a></li>
+                   <li class="nav-item"><a class="nav-link" href="{% url 'listar_ventas' %}">Ventas</a></li>
+                   <li class="nav-item"><a class="nav-link" href="{% url 'listar_productos' %}">Productos</a></li>
+                   <li class="nav-item"><a class="nav-link" href="{% url 'crear_producto' %}">Nuevo Producto</a></li>
+                   <li class="nav-item"><a class="nav-link" href="{% url 'listar_compras' %}">Listar Compra</a></li>
+                   <li class="nav-item"><a class="nav-link" href="{% url 'crear_categoria' %}">Nueva Categoría</a></li>
+                   <li class="nav-item"><a class="nav-link" href="{% url 'reporte_ventas' %}">Informe de Ventas</a></li>
+                   <li class="nav-item"><a class="nav-link" href="{% url 'reporte_compras' %}">Informe de Compras</a></li>                    
+                   <li class="nav-item">
+                       <form method="POST" action="{% url 'logout' %}">
+                           {% csrf_token %}
+                           <button type="submit" class="nav-link btn btn-link">Cerrar sesión</button>
+                       </form>
+                   </li>
+               </ul>
+           </div>
+       </div>
+   </nav>
+
+   <!-- Mensajes -->
+   <div class="container mt-3">
+       {% if messages %}
+       <div class="messages">
+           {% for message in messages %}
+           <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+               {{ message }}
+               <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+           </div>
+           {% endfor %}
+       </div>
+       {% endif %}
+   </div>
+
+   <!-- Encabezado con imagen de fondo -->
+   <header class="bg-dark text-white text-center py-5" style="background-image: url('{% static 'ventas/images/cafeteria.jpg' %}'); background-size: cover; background-position: center;">
+       <div class="container">
+           <h1 class="display-4">Bienvenido al Sistema de Punto de Venta</h1>
+           <p class="lead">Gestión eficiente para tu cafetería</p>
+       </div>
+   </header>
+   
+   <!-- Contenido principal (Dashboard) -->
+   <main class="container my-5">
+       <div class="row">
+           <div class="col text-center">
+               <h2>Bienvenido al Dashboard</h2>
+               <p class="fs-4">Desde aquí puedes gestionar productos, ventas y categorías. Elige una opción del menú para empezar.</p>
+           </div>
+       </div>
+       <!-- Estadísticas y acceso rápido a funciones -->
+       <div class="row mt-5">
+           <div class="col-md-4">
+               <div class="card text-white bg-primary mb-3">
+                   <div class="card-header">Ventas</div>
+                   <div class="card-body">
+                       <h5 class="card-title">Gestiona tus ventas</h5>
+                       <p class="card-text">Accede a todas las ventas realizadas, crea nuevas ventas o edita las existentes.</p>
+                       <a href="{% url 'listar_ventas' %}" class="btn btn-light">Ver Ventas</a>
+                   </div>
+               </div>
+           </div>
+           <div class="col-md-4">
+               <div class="card text-white bg-success mb-3">
+                   <div class="card-header">Compras</div>
+                   <div class="card-body">
+                       <h5 class="card-title">Gestiona tus Compras</h5>
+                       <p class="card-text">Añade, edita o elimina tus Compras.</p>
+                       <a href="{% url 'listar_compras' %}" class="btn btn-light">Ver Productos</a>
+                   </div>
+               </div>
+           </div>
+           <div class="col-md-4">
+               <div class="card text-white bg-info mb-3">
+                   <div class="card-header">Productos</div>
+                   <div class="card-body">
+                       <h5 class="card-title">Gestiona tus productos</h5>
+                       <p class="card-text">Añade, edita o elimina productos de tu inventario.</p>
+                       <a href="{% url 'listar_productos' %}" class="btn btn-light">Ver Productos</a>
+                   </div>
+               </div>
+           </div>
+           
+           <div class="col-md-4">
+               <div class="card text-white bg-warning mb-3">
+                   <div class="card-header">Categorías</div>
+                   <div class="card-body">
+                       <h5 class="card-title">Gestiona las categorías</h5>
+                       <p class="card-text">Crea y administra las categorías de productos para organizar mejor tu inventario.</p>
+                       <a href="{% url 'listar_categorias' %}" class="btn btn-light">Ver Categorías</a>
+                   </div>
+               </div>
+           </div>
+       </div>
+   </main>
+
+   <!-- Footer -->
+   <footer class="bg-dark text-white text-center py-3">
+       <p class="mb-0">&copy; 2024 Tu Empresa. Todos los derechos reservados.</p>
+   </footer>
+
+   <!-- Scripts de Bootstrap -->
+   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
