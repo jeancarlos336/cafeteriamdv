@@ -1,0 +1,29 @@
+{% extends 'ventas/base.html' %}
+{% block content %}
+<h2>Lista de Compras</h2>
+<a href="{% url 'crear_compra' %}" class="btn btn-primary mb-3">Nueva Compra</a>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Fecha</th>
+            <th>Número de Boleta</th>
+            <th>Destino</th>
+            <th>Total</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for compra in compras %}
+        <tr>
+            <td>{{ compra.fecha }}</td>
+            <td>{{ compra.numero_boleta }}</td>
+            <td>{{ compra.destino }}</td>
+            <td>{{ compra.total }}</td>
+            <td>
+                <a href="{% url 'ver_compra' compra.id %}" class="btn btn-info">Ver</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
