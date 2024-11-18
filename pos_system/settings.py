@@ -1,21 +1,22 @@
 from pathlib import Path
-import os
-import dj_database_url
 from django.contrib.messages import constants as messages
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from a .env file
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
+SECRET_KEY = os.getenv("SECRET_KEY", "your-default-secret-key")
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-+4lg&gtmccmp9&^+*^a&9mfhimx&g#&66vfg=mg!0t&36rv$)m"
+# Debug mode (use False in production)
+DEBUG = os.getenv("DEBUG", "True") == "True"
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
-
-ALLOWED_HOSTS = ['cafeteriamdv.herokuapp.com']
+# Hosts permitidos dinámicos
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1,3.208.20.119").split(",")
 
 # Application definition
 INSTALLED_APPS = [
@@ -25,7 +26,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "ventas",  # Asegúrate de que esta es tu app principal
+    "ventas",
     "django.contrib.humanize",
     "crispy_forms",
     "widget_tweaks",
@@ -33,13 +34,11 @@ INSTALLED_APPS = [
 
 CRISPY_TEMPLATE_PACK = 'bootstrap5'
 
-# Configuración de autenticación
-LOGIN_URL = 'login'  # Esto redirige a la vista de login si no está autenticado
-LOGIN_REDIRECT_URL = 'dashboard'  # Esto redirigirá a la vista dashboard después de iniciar sesión
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'dashboard'
 
 MIDDLEWARE = [
-    "django.middleware.security.SecurityMiddleware",  # Mantener este para la seguridad en producción
-    "whitenoise.middleware.WhiteNoiseMiddleware",     # Agrega este para servir archivos estáticos en Heroku
+    "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -54,9 +53,9 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
-            BASE_DIR / 'pos_system' / 'ventas' / 'templates',  # Aquí debe estar la ruta correcta a tus plantillas
+            BASE_DIR / 'pos_system' / 'ventas' / 'templates',
         ],
-        'APP_DIRS': True,  # Asegúrate de que esté activado para buscar plantillas dentro de las apps
+        'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
@@ -70,29 +69,36 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "pos_system.wsgi.application"
 
-# Database
-# Configuración para Heroku
-if 'DATABASE_URL' in os.environ:
-    DATABASES = {
-        'default': dj_database_url.config(conn_max_age=600, ssl_require=True)
+# Database configuration
+#DATABASES = {
+#    'default': {
+#        'ENGINE': 'django.db.backends.postgresql',
+#        'NAME': 'puntodeventa',
+#        'USER': 'jortega',
+#        'PASSWORD': 'Carlos.2024',
+#        'HOST': 'localhost',
+#        'PORT': '5432',
+#    }
+#}
+# Configuración de base de datos flexible
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('DB_NAME', 'puntodeventa'),
+        'USER': os.getenv('DB_USER', 'jortega'),
+        'PASSWORD': os.getenv('DB_PASSWORD', 'Carlos.2024'),
+        'HOST': os.getenv('DB_HOST', 'localhost'),
+        'PORT': os.getenv('DB_PORT', '5432'),
     }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'puntodeventa',
-            'USER': 'jortega',
-            'PASSWORD': 'Carlos.2024',
-            'HOST': 'localhost',
-            'PORT': '5432',
-        }
-    }
+}
 
-# Seguridad
-SECURE_SSL_REDIRECT = True  # Redirige HTTP a HTTPS en producción
-SECURE_HSTS_SECONDS = 31536000  # Habilita HSTS con un valor de 1 año (ajústalo según tus necesidades)
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_HSTS_PRELOAD = True
+
+
+# Security settings
+SECURE_SSL_REDIRECT = os.getenv("SECURE_SSL_REDIRECT", "False") == "True"
+SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS", "0"))
+SECURE_HSTS_INCLUDE_SUBDOMAINS = os.getenv("SECURE_HSTS_INCLUDE_SUBDOMAINS", "False") == "True"
+SECURE_HSTS_PRELOAD = os.getenv("SECURE_HSTS_PRELOAD", "False") == "True"
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -111,27 +117,19 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # Internationalization
-LANGUAGE_CODE = "en-us"
+LANGUAGE_CODE = "es-es"
 TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
+# Static files configuration
 STATIC_URL = '/static/'
-
-# Configuración de archivos estáticos para Heroku
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # Asegúrate de tener esta carpeta para los archivos recolectados
-
-# Rutas adicionales donde Django buscará archivos estáticos
 STATICFILES_DIRS = [
-    BASE_DIR / "static",  # Si tienes archivos estáticos adicionales, ajústalo según sea necesario
+    BASE_DIR / "ventas/static/ventas",
 ]
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# Default primary key field type
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-# Configuración de mensajes
+# Message tags configuration
 MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 MESSAGE_TAGS = {
     messages.DEBUG: 'debug',

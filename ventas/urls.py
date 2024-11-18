@@ -42,5 +42,8 @@ urlpatterns = [
     path('compras/', views.listar_compras, name='listar_compras'),
     path('compras/crear/', views.crear_compra, name='crear_compra'),
     path('compras/<int:compra_id>/', views.ver_compra, name='ver_compra'),    
+    path('compras/<int:compra_id>/editar/', views.editar_compra, name='editar_compra'),
+    path('compras/<int:compra_id>/eliminar/', views.eliminar_compra, name='eliminar_compra'),
+ 
     
 ]

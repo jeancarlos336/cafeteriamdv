@@ -1,0 +1,32 @@
+{% extends 'ventas/base.html' %}
+{% load widget_tweaks %}
+{% block content %}
+<h2>Editar Compra</h2>
+
+<form method="POST">
+    {% csrf_token %}
+    <div class="form-group">
+        <label for="{{ form.fecha.id_for_label }}">Fecha</label>
+        {{ form.fecha|add_class:"form-control" }}
+    </div>
+    
+    <div class="form-group">
+        <label for="{{ form.numero_boleta.id_for_label }}">Número de Boleta</label>
+        {{ form.numero_boleta|add_class:"form-control" }}
+    </div>
+
+    <div class="form-group">
+        <label for="{{ form.destino.id_for_label }}">Destino</label>
+        {{ form.destino|add_class:"form-control" }}
+    </div>
+
+    <div class="form-group">
+        <label for="{{ form.total.id_for_label }}">Total</label>
+        {{ form.total|add_class:"form-control" }}
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-3">Actualizar Compra</button>
+    <a href="{% url 'listar_compras' %}" class="btn btn-secondary mt-3 ml-2">Cancelar</a>
+</form>
+
+{% endblock %}
