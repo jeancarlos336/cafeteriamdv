@@ -279,6 +279,30 @@ def ver_compra(request, compra_id):
     return render(request, 'ventas/ver_compra.html', {'compra': compra})
 
 @login_required
+def editar_compra(request, compra_id):
+    compra = get_object_or_404(Compra, id=compra_id)
+    if request.method == 'POST':
+        form = CompraForm(request.POST, instance=compra)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Compra actualizada con éxito.")
+            return redirect('listar_compras')
+    else:
+        form = CompraForm(instance=compra)
+    return render(request, 'ventas/editar_compra.html', {'form': form, 'compra': compra})
+
+
+@login_required
+def eliminar_compra(request, compra_id):
+    compra = get_object_or_404(Compra, id=compra_id)
+    if request.method == 'POST':
+        compra.delete()
+        messages.success(request, "Compra eliminada con éxito.")
+        return redirect('listar_compras')
+    return render(request, 'ventas/eliminar_compra.html', {'compra': compra})
+
+
+@login_required
 @admin_required  # Usamos nuestro decorador personalizado
 def generar_reporte_compras(request):
     if request.method == "POST":

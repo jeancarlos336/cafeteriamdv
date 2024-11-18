@@ -13,10 +13,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv("SECRET_KEY", "your-default-secret-key")
 
 # Debug mode (use False in production)
-DEBUG = os.getenv("DEBUG", "False") == "True"
+DEBUG = os.getenv("DEBUG", "True") == "True"
 
-# Hosts allowed to access the application
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost").split(",")
+# Hosts permitidos dinámicos
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1,3.208.20.119").split(",")
 
 # Application definition
 INSTALLED_APPS = [
@@ -70,6 +70,17 @@ TEMPLATES = [
 WSGI_APPLICATION = "pos_system.wsgi.application"
 
 # Database configuration
+#DATABASES = {
+#    'default': {
+#        'ENGINE': 'django.db.backends.postgresql',
+#        'NAME': 'puntodeventa',
+#        'USER': 'jortega',
+#        'PASSWORD': 'Carlos.2024',
+#        'HOST': 'localhost',
+#        'PORT': '5432',
+#    }
+#}
+# Configuración de base de datos flexible
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -80,6 +91,8 @@ DATABASES = {
         'PORT': os.getenv('DB_PORT', '5432'),
     }
 }
+
+
 
 # Security settings
 SECURE_SSL_REDIRECT = os.getenv("SECURE_SSL_REDIRECT", "False") == "True"

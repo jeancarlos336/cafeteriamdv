@@ -21,6 +21,8 @@
             <td>{{ compra.total }}</td>
             <td>
                 <a href="{% url 'ver_compra' compra.id %}" class="btn btn-info">Ver</a>
+                <a href="{% url 'editar_compra' compra.id %}" class="btn btn-warning">Editar</a>
+                <a href="{% url 'eliminar_compra' compra.id %}" class="btn btn-danger">Eliminar</a>
             </td>
         </tr>
         {% endfor %}

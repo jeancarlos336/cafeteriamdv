@@ -65,3 +65,4 @@ class ReporteCompraForm(forms.Form):
 class ReporteVentaForm(forms.Form):
     fecha_inicio = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}), label="Fecha de inicio")
     fecha_fin = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}), label="Fecha de fin")
+
