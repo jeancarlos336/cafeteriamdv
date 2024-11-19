@@ -132,35 +132,34 @@ def crear_categoria(request):
 def crear_venta_completa(request):
     if request.method == 'POST':
         venta_form = VentaForm(request.POST)
+        formset = DetalleVentaFormSet(request.POST)
         
-        if venta_form.is_valid():
-            venta = venta_form.save(commit=False)
-            # Inicialmente guardamos la venta con total 0
-            venta.total = Decimal('0.00')
-            venta.save()
+        if venta_form.is_valid() and formset.is_valid():
+            total_venta = Decimal('0.00')
             
-            formset = DetalleVentaFormSet(request.POST, instance=venta)
-            
-            if formset.is_valid():
-                total_venta = Decimal('0.00')
+            # Solo guarda la venta si hay detalles
+            if any(form.cleaned_data and not form.cleaned_data.get('DELETE') for form in formset):
+                venta = venta_form.save(commit=False)
+                venta.total = Decimal('0.00')  # Inicializa con cero
+                venta.save()
+                
                 detalles = formset.save(commit=False)
                 
                 for detalle in detalles:
                     producto = detalle.id_producto
+                    detalle.id_venta = venta
                     detalle.precio_unitario = producto.valor_venta
                     detalle.sub_total = detalle.cantidad * detalle.precio_unitario
                     detalle.save()
                     total_venta += detalle.sub_total
                 
-                # Actualizamos el total de la venta
+                # Actualiza el total de la venta
                 venta.total = total_venta
                 venta.save()
                 
-                # Eliminamos los detalles marcados para eliminar
-                for obj in formset.deleted_objects:
-                    obj.delete()
-                
                 return redirect('listar_ventas')
+            else:
+                messages.error(request, 'Debe agregar al menos un producto a la venta')
     else:
         venta_form = VentaForm()
         formset = DetalleVentaFormSet()
@@ -169,7 +168,6 @@ def crear_venta_completa(request):
         'venta_form': venta_form,
         'detalle_venta_formset': formset
     })
-
 
 def obtener_precio_producto(request, producto_id):
     try:
