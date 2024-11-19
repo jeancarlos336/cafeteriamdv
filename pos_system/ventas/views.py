@@ -77,7 +77,6 @@ def dashboard_view(request):
 
 
 # Vista para crear un producto
-
 @login_required
 @admin_required  # Usamos nuestro decorador personalizado
 def crear_producto(request):
@@ -127,6 +126,7 @@ def crear_categoria(request):
         form = CategoriaProductoForm()
     return render(request, 'ventas/crear_categoria.html', {'form': form})
 
+# Vista para crear venta completa
 @login_required
 @transaction.atomic
 def crear_venta_completa(request):
@@ -168,14 +168,15 @@ def crear_venta_completa(request):
         'venta_form': venta_form,
         'detalle_venta_formset': formset
     })
-
+# Vista obtine precio
 def obtener_precio_producto(request, producto_id):
     try:
         producto = Producto.objects.get(id_producto=producto_id)
         return JsonResponse({'precio': producto.valor_venta})  # Asegúrate de que 'valor_venta' es el precio correcto
     except Producto.DoesNotExist:
         return JsonResponse({'precio': 0})
-
+    
+# Vista generar boleta de venta
 @login_required
 def generar_boleta_pdf(request, venta_id):
     venta = get_object_or_404(Venta, id_venta=venta_id)
@@ -199,6 +200,8 @@ def generar_boleta_pdf(request, venta_id):
 
     return response
 
+# Vista elimina venta
+@admin_required  # Usamos nuestro decorador personalizado
 @login_required
 def eliminar_venta(request, venta_id):
     venta = get_object_or_404(Venta, id_venta=venta_id)
