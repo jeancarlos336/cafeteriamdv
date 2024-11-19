@@ -20,8 +20,7 @@
                <ul class="navbar-nav ms-auto">
                    <li class="nav-item"><a class="nav-link" href="{% url 'crear_venta_completa' %}">Crear Venta</a></li>
                    <li class="nav-item"><a class="nav-link" href="{% url 'listar_ventas' %}">Ventas</a></li>
-                   <li class="nav-item"><a class="nav-link" href="{% url 'listar_productos' %}">Productos</a></li>
-                   <li class="nav-item"><a class="nav-link" href="{% url 'crear_producto' %}">Nuevo Producto</a></li>
+                   <li class="nav-item"><a class="nav-link" href="{% url 'listar_productos' %}">Productos</a></li>                   
                    <li class="nav-item"><a class="nav-link" href="{% url 'listar_compras' %}">Listar Compra</a></li>
                    <li class="nav-item"><a class="nav-link" href="{% url 'crear_categoria' %}">Nueva Categoría</a></li>
                    <li class="nav-item"><a class="nav-link" href="{% url 'reporte_ventas' %}">Informe de Ventas</a></li>
@@ -54,8 +53,7 @@
    <!-- Encabezado con imagen de fondo -->
    <header class="bg-dark text-white text-center py-5" style="background-image: url('{% static 'ventas/images/cafeteria.jpg' %}'); background-size: cover; background-position: center;">
        <div class="container">
-           <h1 class="display-4">Bienvenido al Sistema de Punto de Venta</h1>
-           <p class="lead">Gestión eficiente para tu cafetería</p>
+           <h1 class="display-4">Cafetería MDV</h1>
        </div>
    </header>
    
@@ -63,8 +61,8 @@
    <main class="container my-5">
        <div class="row">
            <div class="col text-center">
-               <h2>Bienvenido al Dashboard</h2>
-               <p class="fs-4">Desde aquí puedes gestionar productos, ventas y categorías. Elige una opción del menú para empezar.</p>
+               <h2>Bienvenido</h2>
+               <p class="fs-4">Desde aquí puedes gestionar productos, ventas y compras. Elige una opción del menú para empezar.</p>
            </div>
        </div>
        <!-- Estadísticas y acceso rápido a funciones -->
