@@ -6,7 +6,7 @@ from django.http import JsonResponse
 from decimal import Decimal
 from django.db import transaction
 from django.http import HttpResponse
-from reportlab.lib.pagesizes import letter, A4
+from reportlab.lib.pagesizes import letter, A4, landscape
 from reportlab.pdfgen import canvas
 from .models import Venta, DetalleVenta, Compra, Venta
 from django.template.loader import render_to_string
@@ -24,6 +24,7 @@ from io import BytesIO
 from django.db import models
 from django.conf import settings
 from functools import wraps
+
 
 # Decorador personalizado para verificar si es administrador
 def admin_required(view_func):
@@ -315,90 +316,74 @@ def generar_reporte_compras(request):
             fecha_fin = form.cleaned_data['fecha_fin']
             destino = form.cleaned_data['destino']
 
-            # Filtrar las compras según las fechas y el destino solo si este está definido
+            # Filtrar las compras según las fechas y el destino
             if destino:
                 compras = Compra.objects.filter(
                     fecha__range=(fecha_inicio, fecha_fin),
                     destino=destino
-                )
+                ).order_by('-id')
             else:
                 compras = Compra.objects.filter(
                     fecha__range=(fecha_inicio, fecha_fin)
-                )
+                ).order_by('-id')
 
-            # Sumar todos los valores de las compras
+            # Calcular el total
             total_compras = sum(compra.total for compra in compras)
 
-            # Generar el PDF
+            # Generar el PDF en formato horizontal
             buffer = BytesIO()
-            p = canvas.Canvas(buffer, pagesize=A4)            
-            
-            # Título dividido en dos líneas
-            encabezado_linea1 = "Informe de Compras Cafetería MDV"
-            encabezado_linea2 = f"Desde {fecha_inicio} hasta {fecha_fin}"
-            if destino:
-                encabezado_linea2 += f" Items: {destino}"
+            p = canvas.Canvas(buffer, pagesize=landscape(A4))
 
-            # Establecer el estilo de fuente
+            # Encabezado
             p.setFont("Helvetica-Bold", 16)
+            p.drawString(40, 550, "Informe de Compras - Cafetería MDV")
+            p.setFont("Helvetica", 12)
+            p.drawString(40, 530, f"Desde {fecha_inicio} hasta {fecha_fin}")
+            if destino:
+                p.drawString(40, 510, f"Destino: {destino}")
 
-            # Dibujar la primera línea del encabezado
-            p.drawString(100, 800, encabezado_linea1)
-
-            # Dibujar la segunda línea del encabezado
-            p.setFont("Helvetica", 12)  # Fuente normal para la segunda línea
-            p.drawString(100, 780, encabezado_linea2)
-
-            y = 750  # Coordenada y inicial para los encabezados de columnas
-            p.setFont("Helvetica", 10)
-            # Encabezados de las columnas con borde
-            p.drawString(80, y, "Fecha")
-            p.drawString(180, y, "N° Boleta")
-            p.drawString(280, y, "Destino")
-            p.drawString(380, y, "Detalle")
-            p.drawString(480, y, "Total")
-            y -= 30
-
-            # Dibujar líneas horizontales para el encabezado
-            p.line(70, y + 10, 530, y + 10)  # Línea horizontal en el encabezado
-
-            # Agregar los detalles de cada compra
-            for compra in compras:
-                p.drawString(80, y, compra.fecha.strftime('%d-%m-%Y'))
-                p.drawString(180, y, compra.numero_boleta)
-                p.drawString(280, y, compra.destino)
-                p.drawString(380, y, compra.detalle)        
-                p.drawString(480, y, "{:,.0f}".format(compra.total).replace(',', '.'))
-                y -= 20
-
-                # Dibujar líneas horizontales para separar filas
-                p.line(70, y + 10, 530, y + 10)  # Línea horizontal después de cada fila
-
-            # Agregar el total de las compras al final del informe
-            y -= 20  # Espacio antes del total
-            p.setFont("Helvetica-Bold", 12)  # Negrita para el total
-            p.drawString(380, y, "Total Compras:")
-            p.drawString(480, y, "{:,.0f}".format(total_compras).replace(',', '.'))
-
-            # Agregar línea para el total
+            # Tabla
+            y = 480
+            p.setFont("Helvetica-Bold", 10)
+            p.drawString(40, y, "Fecha")
+            p.drawString(120, y, "N° Boleta")
+            p.drawString(200, y, "Destino")
+            p.drawString(300, y, "Detalle")
+            p.drawString(600, y, "Total")
             y -= 20
-            p.line(70, y + 10, 530, y + 10)  # Línea horizontal debajo del total
+
+            # Contenido de la tabla
+            p.setFont("Helvetica", 10)
+            for compra in compras:
+                p.drawString(40, y, compra.fecha.strftime('%d-%m-%Y'))
+                p.drawString(120, y, compra.numero_boleta)
+                p.drawString(200, y, compra.destino if compra.destino else "N/A")
+                p.drawString(300, y, compra.detalle)
+                p.drawString(600, y, "{:,.0f}".format(compra.total).replace(',', '.'))
+                y -= 15
+
+                if y < 50:  # Saltar a una nueva página si no hay más espacio
+                    p.showPage()
+                    p.setFont("Helvetica", 10)
+                    y = 550
+
+            # Total al final
+            p.setFont("Helvetica-Bold", 12)
+            p.drawString(400, y - 30, "Total Compras:")
+            p.drawString(500, y - 30, "{:,.0f}".format(total_compras).replace(',', '.'))
 
             p.showPage()
             p.save()
 
-            # Configurar el HttpResponse para devolver el PDF
+            # Respuesta HTTP
             buffer.seek(0)
             response = HttpResponse(buffer, content_type='application/pdf')
-            response['Content-Disposition'] = f'attachment; filename="reporte_compras_{datetime.now().strftime("%Y%m%d")}.pdf"'
-            return response      
-
+            response['Content-Disposition'] = f'attachment; filename="reporte_compras_horizontal_{datetime.now().strftime("%Y%m%d")}.pdf"'
+            return response
     else:
         form = ReporteCompraForm()
 
     return render(request, 'ventas/reporte_compras.html', {'form': form})
-
-
 
 # Vista para generar reporte de ventas
 
