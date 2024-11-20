@@ -261,7 +261,7 @@ def custom_logout(request):
 
 @login_required
 def listar_compras(request):
-    compras = Compra.objects.all().order_by('-fecha')
+    compras = Compra.objects.all().order_by('-id')
     return render(request, 'ventas/listar_compras.html', {'compras': compras})
 @login_required
 def crear_compra(request):
