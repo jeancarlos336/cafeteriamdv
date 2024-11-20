@@ -6,8 +6,8 @@
     <thead>
         <tr>
             <th>Fecha</th>
-            <th>Número de Boleta</th>
-            <th>Detalle</th>
+            <th>N° de Boleta</th>
+            <th>Detalle de Compra</th>
             <th>Destino</th>
             <th>Total</th>
             <th>Acciones</th>
@@ -16,7 +16,7 @@
     <tbody>
         {% for compra in compras %}
         <tr>
-            <td>{{ compra.fecha }}</td>
+            <td>{{ compra.fecha|date:"d-m-Y" }}</td>
             <td>{{ compra.numero_boleta }}</td>
             <td>{{ compra.detalle }}</td>
             <td>{{ compra.destino }}</td>
