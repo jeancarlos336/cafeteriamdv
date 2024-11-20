@@ -18,7 +18,7 @@
             <td>{{ compra.fecha }}</td>
             <td>{{ compra.numero_boleta }}</td>
             <td>{{ compra.destino }}</td>
-            <td>{{ compra.total }}</td>
+            <td>{{ compra.total|floatformat:0 }}</td>
             <td>
                 <a href="{% url 'ver_compra' compra.id %}" class="btn btn-info">Ver</a>
                 <a href="{% url 'editar_compra' compra.id %}" class="btn btn-warning">Editar</a>
