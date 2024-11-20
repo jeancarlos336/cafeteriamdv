@@ -127,24 +127,25 @@ def crear_categoria(request):
     return render(request, 'ventas/crear_categoria.html', {'form': form})
 
 # Vista para crear venta completa
-@login_required
+login_required
 @transaction.atomic
 def crear_venta_completa(request):
     if request.method == 'POST':
         venta_form = VentaForm(request.POST)
         formset = DetalleVentaFormSet(request.POST)
-        
+       
         if venta_form.is_valid() and formset.is_valid():
             total_venta = Decimal('0.00')
-            
+           
             # Solo guarda la venta si hay detalles
             if any(form.cleaned_data and not form.cleaned_data.get('DELETE') for form in formset):
                 venta = venta_form.save(commit=False)
                 venta.total = Decimal('0.00')  # Inicializa con cero
+                venta.vendedor = request.user  # Asigna el usuario logeado
                 venta.save()
-                
+               
                 detalles = formset.save(commit=False)
-                
+               
                 for detalle in detalles:
                     producto = detalle.id_producto
                     detalle.id_venta = venta
@@ -152,22 +153,23 @@ def crear_venta_completa(request):
                     detalle.sub_total = detalle.cantidad * detalle.precio_unitario
                     detalle.save()
                     total_venta += detalle.sub_total
-                
+               
                 # Actualiza el total de la venta
                 venta.total = total_venta
                 venta.save()
-                
+               
                 return redirect('listar_ventas')
             else:
                 messages.error(request, 'Debe agregar al menos un producto a la venta')
     else:
         venta_form = VentaForm()
         formset = DetalleVentaFormSet()
-    
+   
     return render(request, 'ventas/crear_venta_completa.html', {
         'venta_form': venta_form,
         'detalle_venta_formset': formset
     })
+
 # Vista obtine precio
 def obtener_precio_producto(request, producto_id):
     try:
@@ -399,63 +401,39 @@ def generar_reporte_compras(request):
 
 
 # Vista para generar reporte de ventas
+
 @login_required
-@admin_required  # Usamos nuestro decorador personalizado
+@admin_required
 def generar_reporte_ventas(request):
     if request.method == "POST":
         form = ReporteVentaForm(request.POST)
         if form.is_valid():
             fecha_inicio = form.cleaned_data['fecha_inicio']
             fecha_fin = form.cleaned_data['fecha_fin']
+            vendedor = form.cleaned_data.get('vendedor')
 
             # Filtrar las ventas según las fechas
             ventas = Venta.objects.filter(fecha__range=(fecha_inicio, fecha_fin))
+            
+            # Filtrar por vendedor si se seleccionó
+            if vendedor:
+                ventas = ventas.filter(vendedor=vendedor)
 
             # Calcular el total de ventas
-            total_ventas = ventas.aggregate(total=models.Sum('total'))['total'] or 0
+            total_ventas = ventas.aggregate(total=models.Sum('total'))['total'] or Decimal('0.00')
 
-            # Generar el PDF
-            buffer = BytesIO()
-            p = canvas.Canvas(buffer, pagesize=A4)
-            
-            # Título del reporte
-            encabezado = f"Informe de Ventas desde {fecha_inicio} hasta {fecha_fin}"
-            p.setFont("Helvetica-Bold", 16)
-            p.drawString(100, 800, encabezado)
-            y = 750  # Coordenada y inicial
+            # Preparar contexto para el template
+            context = {
+                'form': form,
+                'ventas': ventas,
+                'total_ventas': total_ventas,
+                'fecha_inicio': fecha_inicio,
+                'fecha_fin': fecha_fin,
+                'vendedor_seleccionado': vendedor
+            }
 
-            # Encabezados de las columnas
-            p.setFont("Helvetica-Bold", 12)
-            p.drawString(80, y, "Fecha")
-            p.drawString(180, y, "Cliente")
-            p.drawString(280, y, "Total")
-            y -= 30
-
-            # Datos de las ventas
-            p.setFont("Helvetica", 10)
-            for venta in ventas:
-                p.drawString(80, y, venta.fecha.strftime('%d-%m-%Y'))
-                p.drawString(180, y, venta.cliente)
-                p.drawString(280, y, "{:,.0f}".format(venta.total).replace(',', '.'))               
-                y -= 20
-
-            # Total de ventas
-            y -= 20  # Espacio antes del total
-            p.setFont("Helvetica-Bold", 12)
-            p.drawString(180, y, "Total Ventas:")
-            p.drawString(280, y, "{:,.0f}".format(total_ventas).replace(',', '.'))
-            
-            p.showPage()
-            p.save()
-
-            # Configurar el HttpResponse para devolver el PDF
-            buffer.seek(0)
-            response = HttpResponse(buffer, content_type='application/pdf')
-            response['Content-Disposition'] = f'attachment; filename="reporte_ventas_{datetime.now().strftime("%Y%m%d")}.pdf"'
-            return response
+            return render(request, 'ventas/resultado_reporte.html', context)
 
     else:
         form = ReporteVentaForm()
-
     return render(request, 'ventas/reporte_ventas.html', {'form': form})
-

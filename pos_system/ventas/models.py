@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 # Modelo para la categoría de productos
 class CategoriaProducto(models.Model):
@@ -28,13 +29,13 @@ class Producto(models.Model):
     def __str__(self):
         return self.nom_producto
 
-
 # Modelo para las ventas
 class Venta(models.Model):
     id_venta = models.AutoField(primary_key=True)
     fecha = models.DateField(auto_now_add=True)
     cliente = models.CharField(max_length=150)
     total = models.DecimalField(max_digits=10, decimal_places=2)
+    vendedor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)  # Nuevo campo
 
     class Meta:
         verbose_name = "Venta"
@@ -42,7 +43,6 @@ class Venta(models.Model):
 
     def __str__(self):
         return f"Venta {self.id_venta} - {self.cliente}"
-
 
 # Modelo para el detalle de la venta
 class DetalleVenta(models.Model):

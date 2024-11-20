@@ -165,26 +165,33 @@
         $('#btnImprimir').click(function() {
             window.print();  // Abre el cuadro de impresión del navegador
         });
+        //formatea cantidades
+        function formatNumber(number) {
+            return number.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' });
+          }
 
         // Función para actualizar subtotal de una fila
         function updateSubtotal(row) {
             const cantidad = parseFloat($(row).find('[name$="cantidad"]').val()) || 0;
-            const precio = parseFloat($(row).find('[name$="precio_unitario"]').val()) || 0;
-            const subtotal = cantidad * precio;
-            $(row).find('[name$="sub_total"]').val(subtotal.toFixed(2));
+            const precio = Math.round(parseFloat($(row).find('[name$="precio_unitario"]').val()) || 0);
+            const subtotal = Math.round(cantidad * precio);
+            $(row).find('[name$="sub_total"]').val(subtotal);
             updateTotal();
         }
+    
 
         // Función para actualizar el total general
         function updateTotal() {
             let total = 0;
             $('.detalle').each(function() {
                 if (!$(this).find('[name$="DELETE"]').is(':checked')) {
-                    const subtotal = parseFloat($(this).find('[name$="sub_total"]').val()) || 0;
+                    const subtotal = Math.round(parseFloat($(this).find('[name$="sub_total"]').val()) || 0);
                     total += subtotal;
                 }
             });
-            $('#total').val(total.toFixed(2));
+            // Mostrar total con formato de moneda
+            const totalFormateado = formatNumber(total);
+            $('#total').val(totalFormateado);
         }
 
         // Función para obtener el precio del producto
@@ -193,7 +200,7 @@
             if (productoId) {
                 $.get(`/obtener_precio_producto/${productoId}/`, function(data) {
                     const row = $(select).closest('.detalle');
-                    row.find('[name$="precio_unitario"]').val(data.precio);
+                    row.find('[name$="precio_unitario"]').val(Math.round(data.precio)); // Añade Math.round()
                     updateSubtotal(row);
                 });
             }

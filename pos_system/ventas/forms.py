@@ -3,7 +3,7 @@ from .models import Producto, Venta, CategoriaProducto, DetalleVenta,Compra
 from django.forms import inlineformset_factory
 from django.forms import DateInput
 from .models import Compra  # Modelo de Compra, asegúrate de que esté definido
-
+from django.contrib.auth.models import User
 
 class VentaForm(forms.ModelForm):
     class Meta:
@@ -62,7 +62,16 @@ class ReporteCompraForm(forms.Form):
     fecha_fin = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}), label="Fecha de fin")
     destino = forms.CharField(label="Destino", required=False)
 
+
+
+
+# reporte de ventas
 class ReporteVentaForm(forms.Form):
     fecha_inicio = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}), label="Fecha de inicio")
     fecha_fin = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}), label="Fecha de fin")
-
+    vendedor = forms.ModelChoiceField(
+        queryset=User.objects.all(), 
+        required=False,
+        empty_label="Todos los vendedores",
+        label="Vendedor (opcional)"
+    )
