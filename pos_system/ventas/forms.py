@@ -15,10 +15,7 @@ class CategoriaProductoForm(forms.ModelForm):
         model = CategoriaProducto
         fields = ['nomb_categoria']  # Campo del modelo que se incluirá en el formulario
 
-class DetalleVentaForm(forms.ModelForm):
-    class Meta:
-        model = DetalleVenta
-        fields = ['id_producto', 'cantidad', 'precio_unitario']
+
 
 
 # Reemplaza tu DetalleVentaFormSet actual por este:
@@ -26,7 +23,7 @@ DetalleVentaFormSet = inlineformset_factory(
     Venta, 
     DetalleVenta,
     fields=['id_producto', 'cantidad', 'precio_unitario', 'sub_total'],
-    extra=3,
+    extra=2,
     can_delete=True
 )
 

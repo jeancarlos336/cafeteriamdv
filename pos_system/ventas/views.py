@@ -24,8 +24,9 @@ from io import BytesIO
 from django.db import models
 from django.conf import settings
 from functools import wraps
+from django.forms import inlineformset_factory
 
-
+# VISTAS ESPECIALES Y DE LOGIN
 # Decorador personalizado para verificar si es administrador
 def admin_required(view_func):
     @wraps(view_func)
@@ -41,16 +42,6 @@ def admin_required(view_func):
         
         return view_func(request, *args, **kwargs)
     return _wrapped_view
-
-# Vista para listar productos
-@admin_required  # Usamos nuestro decorador personalizado
-def listar_productos(request):
-    productos = Producto.objects.all().order_by('id_categoria_id')
-    paginator = Paginator(productos, 10)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    
-    return render(request, 'ventas/listar_productos.html', {'page_obj': page_obj})
 
 # Vista para registrar usuarios
 @login_required
@@ -69,13 +60,38 @@ def register_view(request):
     return render(request, "ventas/register.html", {"form": form})
 
 # Vista del Dashboard (solo accesible para usuarios autenticados)
-
-
-
 @login_required
 def dashboard_view(request):
     return render(request, "ventas/dashboard.html")
 
+# Vista personalizada para el login (verifica si el usuario ya está autenticado)
+class CustomLoginView(LoginView):
+    template_name = 'login.html'  # Asegúrate de tener la plantilla de login correctamente
+
+    def get_redirect_url(self):
+        # Redirige al dashboard si el usuario ya está autenticado
+        if self.request.user.is_authenticated:
+            return redirect('dashboard')
+        return super().get_redirect_url()
+messages
+
+# Vista personalizada para el logout (cerrar sesión)
+def custom_logout(request):
+    logout(request)
+    messages.success(request, "Has cerrado sesión correctamente.")
+    return redirect('login')  # Redirige a la página de login después de cerrar sesión
+
+
+#---------------------------------Vistas de Productos--------------------------------------------
+# Vista para listar productos
+@admin_required  # Usamos nuestro decorador personalizado
+def listar_productos(request):
+    productos = Producto.objects.all().order_by('id_categoria_id')
+    paginator = Paginator(productos, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    return render(request, 'ventas/listar_productos.html', {'page_obj': page_obj})
 
 # Vista para crear un producto
 @login_required
@@ -89,44 +105,37 @@ def crear_producto(request):
     else:
         form = ProductoForm()
     return render(request, 'ventas/crear_producto.html', {'form': form})
-
-
-# Vista para listar ventas
 @login_required
-def listar_ventas(request):
-    ventas = Venta.objects.all().order_by('-id_venta')  # Ordenar por fecha descendente
-    return render(request, 'ventas/listar_ventas.html', {'ventas': ventas})
-
-# Vista para ver detalle de una venta
-
-@login_required
-def ver_detalle_venta(request, id_venta):
-    venta = get_object_or_404(Venta, id_venta=id_venta)
-    detalles = DetalleVenta.objects.filter(id_venta=venta)  # Ajustado para usar el campo correcto
-    return render(request, 'ventas/ver_detalle_venta.html', {'venta': venta, 'detalles': detalles})
-
-
-# Vista para listar categorías
-@login_required
-@admin_required  # Usamos nuestro decorador personalizado
-def listar_categorias(request):
-    categorias = CategoriaProducto.objects.all()  # Obtiene todas las categorías
-    return render(request, 'ventas/listar_categorias.html', {'categorias': categorias})
-
-
-# Vista para crear una categoría
-@login_required
-@admin_required  # Usamos nuestro decorador personalizado
-def crear_categoria(request):
+def eliminar_producto(request, id_producto):
+    producto = get_object_or_404(Producto, id_producto=id_producto)  # Cambia aquí a id_producto
+    
+    # Verificar que la solicitud sea POST para proceder con la eliminación
     if request.method == 'POST':
-        form = CategoriaProductoForm(request.POST)
+        producto.delete()
+        messages.success(request, 'Producto eliminado exitosamente.')
+        return redirect(reverse('listar_productos'))  # Redirigir a la lista de productos
+
+    # Si no es una solicitud POST, redirige a la lista de productos
+    return redirect(reverse('listar_productos'))
+
+@login_required
+@admin_required  # Usamos nuestro decorador personalizado
+def actualizar_producto(request, id_producto):
+    producto = get_object_or_404(Producto, id_producto=id_producto)  # Cambia aquí a id_producto
+    
+    if request.method == 'POST':
+        form = ProductoForm(request.POST, instance=producto)
         if form.is_valid():
             form.save()
-            return redirect('listar_categorias')  # Redirige a la vista de listar categorías
+            messages.success(request, 'Producto actualizado exitosamente.')
+            return redirect(reverse('listar_productos'))  # Redirige a la lista de productos
     else:
-        form = CategoriaProductoForm()
-    return render(request, 'ventas/crear_categoria.html', {'form': form})
+        form = ProductoForm(instance=producto)
+    
+    return render(request, 'ventas/actualizar_producto.html', {'form': form, 'producto': producto})
 
+
+#----------------------------Vistas de Ventas---------------------------
 # Vista para crear venta completa
 login_required
 @transaction.atomic
@@ -171,37 +180,27 @@ def crear_venta_completa(request):
         'detalle_venta_formset': formset
     })
 
-# Vista obtine precio
-def obtener_precio_producto(request, producto_id):
-    try:
-        producto = Producto.objects.get(id_producto=producto_id)
-        return JsonResponse({'precio': producto.valor_venta})  # Asegúrate de que 'valor_venta' es el precio correcto
-    except Producto.DoesNotExist:
-        return JsonResponse({'precio': 0})
-    
-# Vista generar boleta de venta
+# Vista para listar ventas
 @login_required
-def generar_boleta_pdf(request, venta_id):
-    venta = get_object_or_404(Venta, id_venta=venta_id)
-    detalles = DetalleVenta.objects.filter(id_venta=venta)
+def listar_ventas(request):
+    ventas_list = Venta.objects.all().order_by('-id_venta')  # Ordenar por ID descendente (ventas recientes primero)
+    paginator = Paginator(ventas_list, 10)  # Dividir en páginas de 10 registros cada una
 
-    # Renderizar la plantilla HTML
-    html = render_to_string('ventas/boleta_pdf.html', {
-        'venta': venta,
-        'detalles': detalles,
+    # Obtener el número de página actual desde los parámetros de la URL
+    page_number = request.GET.get('page')
+    ventas = paginator.get_page(page_number)  # Obtener la página correspondiente
+
+    # Renderizar la plantilla con los datos paginados
+    return render(request, 'ventas/listar_ventas.html', {
+        'ventas': ventas,  # Pasar solo la página actual de ventas
     })
 
-    # Crear el objeto HttpResponse con el tipo de contenido adecuado
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="boleta_{venta.id_venta}.pdf"'
-
-    # Convertir el HTML a PDF
-    pisa_status = pisa.CreatePDF(html, dest=response)
-
-    if pisa_status.err:
-        return HttpResponse('Error al generar PDF', status=400)
-
-    return response
+# Vista para ver detalle de una venta
+@login_required
+def ver_detalle_venta(request, id_venta):
+    venta = get_object_or_404(Venta, id_venta=id_venta)
+    detalles = DetalleVenta.objects.filter(id_venta=venta)  # Ajustado para usar el campo correcto
+    return render(request, 'ventas/ver_detalle_venta.html', {'venta': venta, 'detalles': detalles})
 
 # Vista elimina venta
 @admin_required  # Usamos nuestro decorador personalizado
@@ -212,53 +211,40 @@ def eliminar_venta(request, venta_id):
     messages.success(request, 'Venta eliminada correctamente.')
     return redirect('listar_ventas')
 
-@login_required
-def eliminar_producto(request, id_producto):
-    producto = get_object_or_404(Producto, id_producto=id_producto)  # Cambia aquí a id_producto
-    
-    # Verificar que la solicitud sea POST para proceder con la eliminación
-    if request.method == 'POST':
-        producto.delete()
-        messages.success(request, 'Producto eliminado exitosamente.')
-        return redirect(reverse('listar_productos'))  # Redirigir a la lista de productos
-
-    # Si no es una solicitud POST, redirige a la lista de productos
-    return redirect(reverse('listar_productos'))
-
+#--------------------VISTAS DE CATEGORIAS---------------------------------------------------
+# Vista para listar categorías
 @login_required
 @admin_required  # Usamos nuestro decorador personalizado
-def actualizar_producto(request, id_producto):
-    producto = get_object_or_404(Producto, id_producto=id_producto)  # Cambia aquí a id_producto
-    
+def listar_categorias(request):
+    categorias = CategoriaProducto.objects.all()  # Obtiene todas las categorías
+    return render(request, 'ventas/listar_categorias.html', {'categorias': categorias})
+
+# Vista para crear una categoría
+@login_required
+@admin_required  # Usamos nuestro decorador personalizado
+def crear_categoria(request):
     if request.method == 'POST':
-        form = ProductoForm(request.POST, instance=producto)
+        form = CategoriaProductoForm(request.POST)
         if form.is_valid():
             form.save()
-            messages.success(request, 'Producto actualizado exitosamente.')
-            return redirect(reverse('listar_productos'))  # Redirige a la lista de productos
+            return redirect('listar_categorias')  # Redirige a la vista de listar categorías
     else:
-        form = ProductoForm(instance=producto)
+        form = CategoriaProductoForm()
+    return render(request, 'ventas/crear_categoria.html', {'form': form})
+
+
+# ------------VISTAS ESPECIALEAS OBTIENE PRECIO
+# Vista obtine precio
+def obtener_precio_producto(request, producto_id):
+    try:
+        producto = Producto.objects.get(id_producto=producto_id)
+        return JsonResponse({'precio': producto.valor_venta})  # Asegúrate de que 'valor_venta' es el precio correcto
+    except Producto.DoesNotExist:
+        return JsonResponse({'precio': 0})
     
-    return render(request, 'ventas/actualizar_producto.html', {'form': form, 'producto': producto})
+    
 
-
-# Vista personalizada para el login (verifica si el usuario ya está autenticado)
-class CustomLoginView(LoginView):
-    template_name = 'login.html'  # Asegúrate de tener la plantilla de login correctamente
-
-    def get_redirect_url(self):
-        # Redirige al dashboard si el usuario ya está autenticado
-        if self.request.user.is_authenticated:
-            return redirect('dashboard')
-        return super().get_redirect_url()
-
-
-# Vista personalizada para el logout (cerrar sesión)
-def custom_logout(request):
-    logout(request)
-    messages.success(request, "Has cerrado sesión correctamente.")
-    return redirect('login')  # Redirige a la página de login después de cerrar sesión
-
+#----------------VISTAS DE COMPRAS---------------------
 
 @login_required
 def listar_compras(request):
@@ -305,6 +291,46 @@ def eliminar_compra(request, compra_id):
         return redirect('listar_compras')
     return render(request, 'ventas/eliminar_compra.html', {'compra': compra})
 
+
+
+#---------INFORMES Y BOLETAS----------------------    
+# Vista generar boleta de venta
+@login_required
+def generar_boleta_pdf(request, venta_id):
+    venta = get_object_or_404(Venta, id_venta=venta_id)
+    detalles = DetalleVenta.objects.filter(id_venta=venta)
+
+    # Renderizar la plantilla HTML
+    html = render_to_string('ventas/boleta_pdf.html', {
+        'venta': venta,
+        'detalles': detalles,
+    })
+
+    # Crear el objeto HttpResponse con el tipo de contenido adecuado
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="boleta_{venta.id_venta}.pdf"'
+
+    # Convertir el HTML a PDF
+    pisa_status = pisa.CreatePDF(html, dest=response)
+
+    if pisa_status.err:
+        return HttpResponse('Error al generar PDF', status=400)
+
+    return response
+
+#-----------------------------------------------------------------
+def generar_boleta_impresion(request, id_venta):
+    venta = Venta.objects.get(id_venta=id_venta)
+    detalles = DetalleVenta.objects.filter(id_venta=venta)
+    
+    # Renderiza la plantilla HTML
+    html_content = render_to_string('ventas/boleta_pdf.html', {
+        'venta': venta,
+        'detalles': detalles
+    })
+    
+    return HttpResponse(html_content)
+#------------------------------------------------------------
 
 @login_required
 @admin_required  # Usamos nuestro decorador personalizado

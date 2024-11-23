@@ -27,6 +27,7 @@ urlpatterns = [
     path('ventas/<int:id_venta>/', ver_detalle_venta, name='ver_detalle_venta'),
     path('eliminar_venta/<int:venta_id>/', eliminar_venta, name='eliminar_venta'),
     
+    
     # Rutas de categorías
     path('categorias/', listar_categorias, name='listar_categorias'),
     path('categorias/crear/', crear_categoria, name='crear_categoria'),
@@ -34,6 +35,7 @@ urlpatterns = [
     # Otras rutas
     path('obtener_precio_producto/<int:producto_id>/', obtener_precio_producto, name='obtener_precio_producto'),
     path('venta/<int:venta_id>/boleta_pdf/', generar_boleta_pdf, name='generar_boleta_pdf'),
+    path('generar_boleta_impresion/<int:id_venta>/', views.generar_boleta_impresion, name='generar_boleta_impresion'),
     path('reporte_compras/', generar_reporte_compras, name='reporte_compras'),
     path('reporte_ventas/', views.generar_reporte_ventas, name='reporte_ventas'),
 
