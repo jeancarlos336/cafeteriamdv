@@ -2,7 +2,7 @@ from django.urls import path
 from django.contrib.auth import views as auth_views  # Vistas de autenticación de Django
 from .views import register_view, dashboard_view, listar_productos, crear_producto, eliminar_producto, \
     listar_ventas, eliminar_venta, ver_detalle_venta, listar_categorias, crear_categoria, \
-    crear_venta_completa, obtener_precio_producto, generar_boleta_pdf, actualizar_producto,listar_compras,crear_compra,ver_compra, generar_reporte_compras
+    crear_venta_completa, obtener_precio_producto,  actualizar_producto,listar_compras,crear_compra,ver_compra, generar_reporte_compras
 from . import views 
 
 
@@ -26,6 +26,9 @@ urlpatterns = [
     path('ventas/crear-completa/', crear_venta_completa, name='crear_venta_completa'),
     path('ventas/<int:id_venta>/', ver_detalle_venta, name='ver_detalle_venta'),
     path('eliminar_venta/<int:venta_id>/', eliminar_venta, name='eliminar_venta'),
+    path('actualizar_venta/<int:pk>/', views.actualizar_venta, name='actualizar_venta'),
+
+    
     
     
     # Rutas de categorías
@@ -34,10 +37,10 @@ urlpatterns = [
     
     # Otras rutas
     path('obtener_precio_producto/<int:producto_id>/', obtener_precio_producto, name='obtener_precio_producto'),
-    path('venta/<int:venta_id>/boleta_pdf/', generar_boleta_pdf, name='generar_boleta_pdf'),
     path('generar_boleta_impresion/<int:id_venta>/', views.generar_boleta_impresion, name='generar_boleta_impresion'),
     path('reporte_compras/', generar_reporte_compras, name='reporte_compras'),
     path('reporte_ventas/', views.generar_reporte_ventas, name='reporte_ventas'),
+    path('informe-ventas/', views.informe_ventas, name='informe_ventas'),
 
     # rutas compras
     

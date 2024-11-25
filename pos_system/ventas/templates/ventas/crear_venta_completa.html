@@ -140,11 +140,28 @@
                                 <span class="input-group-text">Total:</span>
                                 <input type="text" class="form-control" id="total" name="total" readonly>
                             </div>
+                            <div class="input-group">
+                                <span class="input-group-text">Efectivo:</span>
+                                <input type="number" class="form-control" id="efectivo" placeholder="Ingrese efectivo">
+                            </div>
+                            <div class="input-group">
+                                <span class="input-group-text">Vuelto:</span>
+                                <input type="text" class="form-control" id="vuelto" readonly>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
+                </div>                
 
+            </div>
+            <div class="form-check">
+                <input type="radio" id="estado_pagado" name="estado" value="Pagado" class="form-check-input" checked>
+                <label class="form-check-label" for="estado_pagado">Pagado</label>
+            </div>
+            <div class="form-check">
+                <input type="radio" id="estado_pendiente" name="estado" value="Pendiente" class="form-check-input">
+                <label class="form-check-label" for="estado_pendiente">Pendiente</label>
+            </div>
+            
             <!-- Botónes -->
             <div class="form-controls">
                 <button type="submit" class="btn btn-primary">Guardar Venta</button>
@@ -178,22 +195,21 @@
             $(row).find('[name$="sub_total"]').val(subtotal);
             updateTotal();
         }
-    
+        
 
         // Función para actualizar el total general
         function updateTotal() {
             let total = 0;
             $('.detalle').each(function() {
                 if (!$(this).find('[name$="DELETE"]').is(':checked')) {
-                    const subtotal = Math.round(parseFloat($(this).find('[name$="sub_total"]').val()) || 0);
+                    const subtotal = parseFloat($(this).find('[name$="sub_total"]').val()) || 0;
                     total += subtotal;
                 }
             });
-            // Mostrar total con formato de moneda
-            const totalFormateado = formatNumber(total);
-            $('#total').val(totalFormateado);
+            $('#total').val(total);
         }
-
+        
+        
         // Función para obtener el precio del producto
         function getProductPrice(select) {
             const productoId = $(select).val();
@@ -282,6 +298,31 @@
             updateSubtotal(this);
         });
     });
+
+        // Función para calcular y mostrar el vuelto
+        function updateVuelto() {
+            const total = parseFloat($('#total').val().replace(/[^0-9.-]+/g, "")) || 0; // Extrae el número del formato CLP
+            const efectivo = parseFloat($('#efectivo').val()) || 0;
+            const vuelto = efectivo - total;
+    
+            // Actualiza el campo del vuelto
+            $('#vuelto').val(vuelto >= 0 ? vuelto.toLocaleString('es-CL', { style: 'currency', currency: 'CLP' }) : 'Insuficiente');
+        }
+    
+        // Evento para recalcular el vuelto al cambiar el efectivo
+        $('#efectivo').on('input', function() {
+            updateVuelto();
+        });
+    
+        // Recalcula el vuelto cada vez que se actualiza el total
+        $('#total').on('change', function() {
+            updateVuelto();
+        });
+    
+        // Llama a la función al cargar la página para inicializar valores
+        updateVuelto();
+   
+    
     </script>
 </body>
 </html>

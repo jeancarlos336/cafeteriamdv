@@ -10,13 +10,11 @@ class VentaForm(forms.ModelForm):
         model = Venta
         fields = ['cliente']
         
-class CategoriaProductoForm(forms.ModelForm):
+class ActVentaForm(forms.ModelForm):
     class Meta:
-        model = CategoriaProducto
-        fields = ['nomb_categoria']  # Campo del modelo que se incluirá en el formulario
-
-
-
+        model = Venta
+        fields = ['cliente', 'estado']
+        
 
 # Reemplaza tu DetalleVentaFormSet actual por este:
 DetalleVentaFormSet = inlineformset_factory(
@@ -26,7 +24,20 @@ DetalleVentaFormSet = inlineformset_factory(
     extra=2,
     can_delete=True
 )
+         
+        
+class CategoriaProductoForm(forms.ModelForm):
+    class Meta:
+        model = CategoriaProducto
+        fields = ['nomb_categoria']  # Campo del modelo que se incluirá en el formulario
 
+
+
+
+class FiltroVentasForm(forms.Form):
+    fecha_inicio = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}), required=True, label="Fecha Inicio")
+    fecha_fin = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}), required=True, label="Fecha Fin")
+    cliente = forms.CharField(max_length=255, required=False, label="Cliente")
 
 class ProductoForm(forms.ModelForm):
     class Meta:

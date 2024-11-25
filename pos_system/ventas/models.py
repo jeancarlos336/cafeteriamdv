@@ -35,14 +35,20 @@ class Venta(models.Model):
     fecha = models.DateField(auto_now_add=True)
     cliente = models.CharField(max_length=150)
     total = models.DecimalField(max_digits=10, decimal_places=2)
-    vendedor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)  # Nuevo campo
+    vendedor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    estado = models.CharField(
+        max_length=10,
+        choices=[('Pagado', 'Pagado'), ('Pendiente', 'Pendiente')],
+        default='Pagado'
+    )
 
     class Meta:
         verbose_name = "Venta"
         verbose_name_plural = "Ventas"
 
     def __str__(self):
-        return f"Venta {self.id_venta} - {self.cliente}"
+        return f"Venta {self.id_venta} - {self.cliente} ({self.estado})"
+
 
 # Modelo para el detalle de la venta
 class DetalleVenta(models.Model):

@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Producto, CategoriaProducto, Venta, DetalleVenta,Compra
 from .forms import ProductoForm, VentaForm, CategoriaProductoForm
-from .forms import VentaForm, DetalleVentaFormSet,CompraForm, ReporteCompraForm, ReporteVentaForm
+from .forms import VentaForm, DetalleVentaFormSet,CompraForm, ReporteCompraForm, ReporteVentaForm, ActVentaForm
 from django.http import JsonResponse
 from decimal import Decimal
 from django.db import transaction
@@ -25,6 +25,8 @@ from django.db import models
 from django.conf import settings
 from functools import wraps
 from django.forms import inlineformset_factory
+from .forms import FiltroVentasForm
+from django.db.models import Sum
 
 # VISTAS ESPECIALES Y DE LOGIN
 # Decorador personalizado para verificar si es administrador
@@ -152,6 +154,7 @@ def crear_venta_completa(request):
                 venta = venta_form.save(commit=False)
                 venta.total = Decimal('0.00')  # Inicializa con cero
                 venta.vendedor = request.user  # Asigna el usuario logeado
+                venta.estado = request.POST.get('estado', 'Pagado')  # Obtiene el estado del formulario
                 venta.save()
                
                 detalles = formset.save(commit=False)
@@ -210,6 +213,45 @@ def eliminar_venta(request, venta_id):
     venta.delete()
     messages.success(request, 'Venta eliminada correctamente.')
     return redirect('listar_ventas')
+
+#ventas pendientes
+def informe_ventas(request):
+    ventas = []
+    ventas_total = 0
+
+    if request.method == 'POST':
+        fecha_inicio = request.POST.get('fecha_inicio')
+        fecha_termino = request.POST.get('fecha_termino')
+        cliente = request.POST.get('cliente')
+
+        ventas = Venta.objects.filter(estado='Pendiente')
+
+        if fecha_inicio:
+            ventas = ventas.filter(fecha__gte=fecha_inicio)
+        if fecha_termino:
+            ventas = ventas.filter(fecha__lte=fecha_termino)
+        if cliente:
+            ventas = ventas.filter(cliente__icontains=cliente)
+
+        ventas_total = ventas.aggregate(total=Sum('total'))['total'] or 0
+
+    context = {
+        'ventas': ventas,
+        'ventas_total': ventas_total,
+    }
+    return render(request, 'ventas/informe_ventas.html', context)
+
+#actualizar venta
+def actualizar_venta(request, pk):
+    venta = get_object_or_404(Venta, pk=pk)
+    if request.method == 'POST':
+        form = ActVentaForm(request.POST, instance=venta)
+        if form.is_valid():
+            form.save()
+            return redirect('listar_ventas')  # Reemplaza 'lista_ventas' con la URL de tu lista de ventas
+    else:
+        form = ActVentaForm(instance=venta)
+    return render(request, 'ventas/actualizar_venta.html', {'form': form})
 
 #--------------------VISTAS DE CATEGORIAS---------------------------------------------------
 # Vista para listar categorías
@@ -295,30 +337,6 @@ def eliminar_compra(request, compra_id):
 
 #---------INFORMES Y BOLETAS----------------------    
 # Vista generar boleta de venta
-@login_required
-def generar_boleta_pdf(request, venta_id):
-    venta = get_object_or_404(Venta, id_venta=venta_id)
-    detalles = DetalleVenta.objects.filter(id_venta=venta)
-
-    # Renderizar la plantilla HTML
-    html = render_to_string('ventas/boleta_pdf.html', {
-        'venta': venta,
-        'detalles': detalles,
-    })
-
-    # Crear el objeto HttpResponse con el tipo de contenido adecuado
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="boleta_{venta.id_venta}.pdf"'
-
-    # Convertir el HTML a PDF
-    pisa_status = pisa.CreatePDF(html, dest=response)
-
-    if pisa_status.err:
-        return HttpResponse('Error al generar PDF', status=400)
-
-    return response
-
-#-----------------------------------------------------------------
 def generar_boleta_impresion(request, id_venta):
     venta = Venta.objects.get(id_venta=id_venta)
     detalles = DetalleVenta.objects.filter(id_venta=venta)

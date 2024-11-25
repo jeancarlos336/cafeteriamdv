@@ -147,13 +147,13 @@
         }
 
         .btn-print {
-            background-color: #6c757d;
-            border-color: #6c757d;
+            background-color: #008000;
+            border-color: #008000;
             color: white;
         }
 
         .btn-print:hover {
-            background-color: #5a6268;
+            background-color: #b7d5ac;
         }
 
         /* Modal styles */
@@ -228,20 +228,19 @@
                         <td>{{ venta.fecha }}</td>
                         <td>{{ venta.cliente }}</td>
                         <td>${{ venta.total|floatformat:0 }}</td>
-                        <td>
-                            <span class="badge bg-success">Completada</span>
-                        </td>
+                        <td>{{ venta.estado }}</td>                       
                         <td>
                             <div class="action-buttons">
                                 <a href="{% url 'ver_detalle_venta' venta.id_venta %}" class="btn btn-view" title="Ver Detalle">
                                     <i class="fas fa-eye"></i>
-                                </a>                                
+                                </a> 
+                                <a href="{% url 'actualizar_venta' venta.pk %}" class="btn btn-edit" title="Actualizar estado Venta">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </a>                          
+                                                        
                                 <button class="btn btn-delete" title="Eliminar" onclick="confirmarEliminacion({{ venta.id_venta }})">
                                     <i class="fas fa-trash"></i>
-                                </button>
-                                <a href="{% url 'generar_boleta_pdf' venta.id_venta %}" class="btn btn-print" title="Imprimir Boleta">
-                                    <i class="fas fa-print"></i>
-                                </a>
+                                </button>                               
                                 <!-- Reemplaza el botón de imprimir PDF actual con este -->
                                 <a href="#" class="btn btn-print" title="Imprimir Boleta" onclick="imprimirBoleta({{ venta.id_venta }})">
                                     <i class="fas fa-print"></i>
