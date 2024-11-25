@@ -120,6 +120,7 @@ def eliminar_producto(request, id_producto):
     # Si no es una solicitud POST, redirige a la lista de productos
     return redirect(reverse('listar_productos'))
 
+
 @login_required
 @admin_required  # Usamos nuestro decorador personalizado
 def actualizar_producto(request, id_producto):
