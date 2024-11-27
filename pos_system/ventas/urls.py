@@ -2,7 +2,7 @@ from django.urls import path
 from django.contrib.auth import views as auth_views  # Vistas de autenticación de Django
 from .views import register_view, dashboard_view, listar_productos, crear_producto, eliminar_producto, \
     listar_ventas, eliminar_venta, ver_detalle_venta, listar_categorias, crear_categoria, \
-    crear_venta_completa, obtener_precio_producto,  actualizar_producto,listar_compras,crear_compra,ver_compra, generar_reporte_compras
+    crear_venta_completa, obtener_precio_producto,  actualizar_producto,listar_compras,crear_compra,ver_compra, generar_reporte_compras, eliminar_categoria, actualizar_categoria
 from . import views 
 
 
@@ -26,14 +26,14 @@ urlpatterns = [
     path('ventas/crear-completa/', crear_venta_completa, name='crear_venta_completa'),
     path('ventas/<int:id_venta>/', ver_detalle_venta, name='ver_detalle_venta'),
     path('eliminar_venta/<int:venta_id>/', eliminar_venta, name='eliminar_venta'),
-    path('actualizar_venta/<int:pk>/', views.actualizar_venta, name='actualizar_venta'),
-
-    
+    path('actualizar_venta/<int:pk>/', views.actualizar_venta, name='actualizar_venta'),  
     
     
     # Rutas de categorías
     path('categorias/', listar_categorias, name='listar_categorias'),
     path('categorias/crear/', crear_categoria, name='crear_categoria'),
+    path('categorias/eliminar/<int:id_categoria>/', eliminar_categoria, name='eliminar_categoria'), 
+    path('categorias/actualizar/<int:id_categoria>/', actualizar_categoria, name='actualizar_categoria'),
     
     # Otras rutas
     path('obtener_precio_producto/<int:producto_id>/', obtener_precio_producto, name='obtener_precio_producto'),

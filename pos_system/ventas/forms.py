@@ -32,8 +32,6 @@ class CategoriaProductoForm(forms.ModelForm):
         fields = ['nomb_categoria']  # Campo del modelo que se incluirá en el formulario
 
 
-
-
 class FiltroVentasForm(forms.Form):
     fecha_inicio = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}), required=True, label="Fecha Inicio")
     fecha_fin = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}), required=True, label="Fecha Fin")

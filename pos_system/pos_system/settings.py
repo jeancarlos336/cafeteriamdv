@@ -69,18 +69,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "pos_system.wsgi.application"
 
-# Database configuration
-#DATABASES = {
-#    'default': {
-#        'ENGINE': 'django.db.backends.postgresql',
-#        'NAME': 'puntodeventa',
-#        'USER': 'jortega',
-#        'PASSWORD': 'Carlos.2024',
-#        'HOST': 'localhost',
-#        'PORT': '5432',
-#    }
-#}
-# Configuración de base de datos flexible
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',

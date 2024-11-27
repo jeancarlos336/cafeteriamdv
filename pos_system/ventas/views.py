@@ -1,32 +1,39 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import Producto, CategoriaProducto, Venta, DetalleVenta,Compra
-from .forms import ProductoForm, VentaForm, CategoriaProductoForm
-from .forms import VentaForm, DetalleVentaFormSet,CompraForm, ReporteCompraForm, ReporteVentaForm, ActVentaForm
-from django.http import JsonResponse
-from decimal import Decimal
+from django.http import JsonResponse, HttpResponse
 from django.db import transaction
-from django.http import HttpResponse
-from reportlab.lib.pagesizes import letter, A4, landscape
-from reportlab.pdfgen import canvas
-from .models import Venta, DetalleVenta, Compra, Venta
+from django.db.models import Sum, Q
 from django.template.loader import render_to_string
-from xhtml2pdf import pisa
 from django.contrib import messages
 from django.urls import reverse
 from django.core.paginator import Paginator
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login, logout
-from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required,user_passes_test
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.views import LoginView
 from datetime import datetime
 from io import BytesIO
-from django.db import models
 from django.conf import settings
 from functools import wraps
 from django.forms import inlineformset_factory
-from .forms import FiltroVentasForm
-from django.db.models import Sum
+from decimal import Decimal
+
+from reportlab.lib.pagesizes import letter, A4, landscape
+from reportlab.pdfgen import canvas
+from xhtml2pdf import pisa
+
+from .models import Producto, CategoriaProducto, Venta, DetalleVenta, Compra
+from .forms import (
+    ProductoForm,
+    VentaForm,
+    CategoriaProductoForm,
+    DetalleVentaFormSet,
+    CompraForm,
+    ReporteCompraForm,
+    ReporteVentaForm,
+    ActVentaForm,
+    FiltroVentasForm,
+)
+
 
 # VISTAS ESPECIALES Y DE LOGIN
 # Decorador personalizado para verificar si es administrador
@@ -86,14 +93,35 @@ def custom_logout(request):
 
 #---------------------------------Vistas de Productos--------------------------------------------
 # Vista para listar productos
-@admin_required  # Usamos nuestro decorador personalizado
+
 def listar_productos(request):
-    productos = Producto.objects.all().order_by('id_categoria_id')
-    paginator = Paginator(productos, 10)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    # Obtener el término de búsqueda de los parámetros GET
+    search_query = request.GET.get('search', '')  
+
+    # Obtener todos los productos ordenados
+    productos_list = Producto.objects.all()
+
+    # Filtrar productos si hay un término de búsqueda
+    if search_query:
+        productos_list = productos_list.filter(
+            Q(nom_producto__icontains=search_query)|
+            Q(valor_venta__icontains=search_query)
+        )
     
-    return render(request, 'ventas/listar_productos.html', {'page_obj': page_obj})
+    # Dividir en páginas de 10 registros cada una
+    paginator = Paginator(productos_list, 10)
+
+    # Obtener el número de página actual desde los parámetros GET
+    page_number = request.GET.get('page')
+    productos = paginator.get_page(page_number)  # Obtener la página correspondiente
+    
+    # Renderizar la plantilla con los datos paginados
+    return render(request, 'ventas/listar_productos.html', {
+        'productos': productos,  # Nombre consistente
+        'search_query': search_query,
+    })
+   
+#________________________________________
 
 # Vista para crear un producto
 @login_required
@@ -107,20 +135,16 @@ def crear_producto(request):
     else:
         form = ProductoForm()
     return render(request, 'ventas/crear_producto.html', {'form': form})
+
+#elimina prodctuo
 @login_required
 def eliminar_producto(request, id_producto):
     producto = get_object_or_404(Producto, id_producto=id_producto)  # Cambia aquí a id_producto
-    
-    # Verificar que la solicitud sea POST para proceder con la eliminación
-    if request.method == 'POST':
-        producto.delete()
-        messages.success(request, 'Producto eliminado exitosamente.')
-        return redirect(reverse('listar_productos'))  # Redirigir a la lista de productos
-
-    # Si no es una solicitud POST, redirige a la lista de productos
+    producto.delete()
+    messages.success(request, 'Producto eliminado exitosamente.')
     return redirect(reverse('listar_productos'))
 
-
+#actualiza producto
 @login_required
 @admin_required  # Usamos nuestro decorador personalizado
 def actualizar_producto(request, id_producto):
@@ -185,20 +209,45 @@ def crear_venta_completa(request):
     })
 
 # Vista para listar ventas
+
 @login_required
 def listar_ventas(request):
-    ventas_list = Venta.objects.all().order_by('-id_venta')  # Ordenar por ID descendente (ventas recientes primero)
-    paginator = Paginator(ventas_list, 10)  # Dividir en páginas de 10 registros cada una
+    # Obtener el término de búsqueda de los parámetros GET
+    search_query = request.GET.get('search', '').strip()
 
-    # Obtener el número de página actual desde los parámetros de la URL
+    # Filtrar las ventas si hay un término de búsqueda
+    ventas_list = Venta.objects.all().order_by('-id_venta')  # Ordenar por ID descendente
+    
+    if search_query:
+        try:  
+        # Intenta convertir el término de búsqueda al formato 'YYYY-MM-DD ya que asi esta guardado en bd, y yo la busco en formato dd-mm-yyyy'
+            search_date = datetime.strptime(search_query, '%d-%m-%Y').date()      
+            ventas_list = ventas_list.filter(
+                Q(fecha=search_date) #filtra por fecha exacta
+            )
+        except ValueError:
+        # Si no es una fecha, busca en otros campos
+            ventas_list = ventas_list.filter(
+                Q(cliente__icontains=search_query) |  
+                Q(id_venta__icontains=search_query) |              
+                Q(estado__icontains=search_query) |
+                Q(total__icontains=search_query)
+            )
+
+    # Dividir en páginas de 10 registros cada una
+    paginator = Paginator(ventas_list, 10)
+
+    # Obtener el número de página actual desde los parámetros GET
     page_number = request.GET.get('page')
     ventas = paginator.get_page(page_number)  # Obtener la página correspondiente
 
     # Renderizar la plantilla con los datos paginados
     return render(request, 'ventas/listar_ventas.html', {
-        'ventas': ventas,  # Pasar solo la página actual de ventas
+        'ventas': ventas,  # Página actual de ventas
+        'search_query': search_query,  # Pasar el término de búsqueda para reutilizarlo en la plantilla
     })
 
+                  
 # Vista para ver detalle de una venta
 @login_required
 def ver_detalle_venta(request, id_venta):
@@ -259,8 +308,32 @@ def actualizar_venta(request, pk):
 @login_required
 @admin_required  # Usamos nuestro decorador personalizado
 def listar_categorias(request):
-    categorias = CategoriaProducto.objects.all()  # Obtiene todas las categorías
-    return render(request, 'ventas/listar_categorias.html', {'categorias': categorias})
+   
+ # Obtener el término de búsqueda de los parámetros GET
+    search_query = request.GET.get('search', '')  
+
+    # Obtener todos las categorias ordenados    
+    categorias_list = CategoriaProducto.objects.all().order_by('id_categoria')  # Obtiene todas las categorías
+
+    # Filtrar productos si hay un término de búsqueda
+    if search_query:
+        categorias_list = categorias_list.filter(
+            Q(id_categoria__icontains=search_query)|
+            Q(nomb_categoria__icontains=search_query)
+        )   
+    # Dividir en páginas de 10 registros cada una
+    paginator = Paginator(categorias_list, 10)
+
+    # Obtener el número de página actual desde los parámetros GET
+    page_number = request.GET.get('page')
+    categoria = paginator.get_page(page_number)  # Obtener la página correspondiente
+    
+    # Renderizar la plantilla con los datos paginados
+    return render(request, 'ventas/listar_categorias.html', {
+        'categoria': categoria,  # Nombre consistente
+        'search_query': search_query,
+    })
+
 
 # Vista para crear una categoría
 @login_required
@@ -275,6 +348,35 @@ def crear_categoria(request):
         form = CategoriaProductoForm()
     return render(request, 'ventas/crear_categoria.html', {'form': form})
 
+#elimina Categoria
+@login_required
+def eliminar_categoria(request, id_categoria):
+    categoria = get_object_or_404(CategoriaProducto, id_categoria=id_categoria)  
+    categoria.delete()
+    messages.success(request, 'categoria eliminada exitosamente.')
+    return redirect(reverse('listar_categorias'))
+
+#actualiza Categoria
+@login_required
+@admin_required  # Usamos nuestro decorador personalizado
+def actualizar_categoria(request, id_categoria):
+    try:
+        # Intenta obtener la categoría por su ID
+        categoria = CategoriaProducto.objects.get(id_categoria=id_categoria)
+    except CategoriaProducto.DoesNotExist:
+        messages.error(request, 'La categoría no existe.')
+        return redirect('listar_categorias')
+
+    if request.method == 'POST':
+        form = CategoriaProductoForm(request.POST, instance=categoria)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Categoría actualizada exitosamente.')
+            return redirect('listar_categorias')
+    else:
+        form = CategoriaProductoForm(instance=categoria)
+    
+    return render(request, 'ventas/actualizarcategoria.html', {'form': form, 'categoria': categoria})
 
 # ------------VISTAS ESPECIALEAS OBTIENE PRECIO
 # Vista obtine precio
@@ -283,16 +385,50 @@ def obtener_precio_producto(request, producto_id):
         producto = Producto.objects.get(id_producto=producto_id)
         return JsonResponse({'precio': producto.valor_venta})  # Asegúrate de que 'valor_venta' es el precio correcto
     except Producto.DoesNotExist:
-        return JsonResponse({'precio': 0})
-    
+        return JsonResponse({'precio': 0}) 
     
 
 #----------------VISTAS DE COMPRAS---------------------
 
 @login_required
 def listar_compras(request):
-    compras = Compra.objects.all().order_by('-id')
-    return render(request, 'ventas/listar_compras.html', {'compras': compras})
+    # Obtener el término de búsqueda de los parámetros GET
+    search_query = request.GET.get('search', '').strip()
+    
+     # Filtrar las compras si hay un término de búsqueda  
+    
+    compras_list = Compra.objects.all().order_by('-id')
+    
+    if search_query:
+        try:         
+            # Intenta convertir el término de búsqueda al formato 'YYYY-MM-DD'
+            search_date = datetime.strptime(search_query, '%d-%m-%Y').date()    
+            compras_list = compras_list.filter(                
+                Q(fecha=search_date)  # Filtra por fecha exacta           
+              
+            )
+        except ValueError:
+            compras_list = compras_list.filter(
+                Q(numero_boleta__icontains=search_query) |  # Reemplaza 'campo1' con el nombre de tu campo a buscar
+                Q(destino__icontains=search_query) |
+                Q(detalle__icontains=search_query) |
+                Q(total__icontains=search_query)         
+                # Agrega más campos según sea necesario
+            )                
+            
+    # Dividir en páginas de 10 registros cada una
+    paginator = Paginator(compras_list, 10)
+
+    # Obtener el número de página actual desde los parámetros GET
+    page_number = request.GET.get('page')
+    compras = paginator.get_page(page_number)  # Obtener la página correspondiente
+    
+     # Renderizar la plantilla con los datos paginados
+    return render(request, 'ventas/listar_compras.html', {
+        'compras': compras,  # Página actual de ventas
+        'search_query': search_query,  # Pasar el término de búsqueda para reutilizarlo en la plantilla
+    })
+
 @login_required
 def crear_compra(request):
     if request.method == 'POST':
