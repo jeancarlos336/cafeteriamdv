@@ -1,38 +1,42 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from django.http import JsonResponse, HttpResponse
-from django.db import transaction
-from django.db.models import Sum, Q
-from django.template.loader import render_to_string
+from datetime import datetime, timedelta
+from decimal import Decimal
+from functools import wraps
+from io import BytesIO
+
+from django.conf import settings
 from django.contrib import messages
-from django.urls import reverse
-from django.core.paginator import Paginator
-from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.views import LoginView
-from datetime import datetime
-from io import BytesIO
-from django.conf import settings
-from functools import wraps
+from django.core.paginator import Paginator
+from django.db import transaction
+from django.db.models import Q, Sum
+from django.db.models.functions import TruncWeek, TruncMonth
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
+from django.urls import reverse
+from django.utils import timezone
 from django.forms import inlineformset_factory
-from decimal import Decimal
 
-from reportlab.lib.pagesizes import letter, A4, landscape
+from reportlab.lib.pagesizes import A4, letter, landscape
 from reportlab.pdfgen import canvas
 from xhtml2pdf import pisa
 
-from .models import Producto, CategoriaProducto, Venta, DetalleVenta, Compra
 from .forms import (
-    ProductoForm,
-    VentaForm,
+    ActVentaForm,
     CategoriaProductoForm,
-    DetalleVentaFormSet,
     CompraForm,
+    DetalleVentaFormSet,
+    FiltroVentasForm,
+    ProductoForm,
     ReporteCompraForm,
     ReporteVentaForm,
-    ActVentaForm,
-    FiltroVentasForm,
+    VentaForm,
 )
+from .models import CategoriaProducto, Compra, DetalleVenta, Producto, Venta
+
 
 
 # VISTAS ESPECIALES Y DE LOGIN
@@ -71,7 +75,36 @@ def register_view(request):
 # Vista del Dashboard (solo accesible para usuarios autenticados)
 @login_required
 def dashboard_view(request):
-    return render(request, "ventas/dashboard.html")
+    # Ventas semanales
+    ventas_semanales = Venta.objects.annotate(
+        semana=TruncWeek('fecha')
+    ).values('semana').annotate(
+        total_ventas=Sum('total')
+    ).order_by('semana')
+
+    # Ventas mensuales
+    ventas_mensuales = Venta.objects.annotate(
+        mes=TruncMonth('fecha')
+    ).values('mes').annotate(
+        total_ventas=Sum('total')
+    ).order_by('mes')
+
+    # Preparar datos para gráficos
+    labels_semanales = [v['semana'].strftime('%d-%m-%Y') for v in ventas_semanales]
+    datos_semanales = [float(v['total_ventas']) for v in ventas_semanales]
+
+    labels_mensuales = [v['mes'].strftime('%B %Y') for v in ventas_mensuales]
+    datos_mensuales = [float(v['total_ventas']) for v in ventas_mensuales]
+
+    context = {
+        'labels_semanales': labels_semanales,
+        'datos_semanales': datos_semanales,
+        'labels_mensuales': labels_mensuales,
+        'datos_mensuales': datos_mensuales,
+    }
+
+    return render(request, 'ventas/dashboard.html', context)
+   
 
 # Vista personalizada para el login (verifica si el usuario ya está autenticado)
 class CustomLoginView(LoginView):
@@ -586,7 +619,8 @@ def generar_reporte_ventas(request):
                 ventas = ventas.filter(vendedor=vendedor)
 
             # Calcular el total de ventas
-            total_ventas = ventas.aggregate(total=models.Sum('total'))['total'] or Decimal('0.00')
+            total_ventas = ventas.aggregate(total=Sum('total'))['total'] or Decimal('0.00')            
+
 
             # Preparar contexto para el template
             context = {
