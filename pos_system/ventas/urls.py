@@ -40,7 +40,8 @@ urlpatterns = [
     path('generar_boleta_impresion/<int:id_venta>/', views.generar_boleta_impresion, name='generar_boleta_impresion'),
     path('reporte_compras/', generar_reporte_compras, name='reporte_compras'),
     path('reporte_ventas/', views.generar_reporte_ventas, name='reporte_ventas'),
-    path('informe-ventas/', views.informe_ventas, name='informe_ventas'),
+    path('informe-ventas/', views.informe_ventas, name='informe_ventas'),    
+    path('balance/', views.balance_anual, name='balance_anual'),
 
     # rutas compras
     

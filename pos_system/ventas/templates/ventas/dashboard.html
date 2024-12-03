@@ -19,13 +19,16 @@
            </button>
            <div class="collapse navbar-collapse" id="navbarNav">
                <ul class="navbar-nav ms-auto">                   
-                   <li class="nav-item"><a class="nav-link" href="{% url 'listar_ventas' %}">Ventas</a></li>
+                   <a href="{% url 'listar_ventas' %}" class="btn btn-primary">Ventas</a></li>
                    <li class="nav-item"><a class="nav-link" href="{% url 'listar_productos' %}">Productos</a></li>                   
                    <li class="nav-item"><a class="nav-link" href="{% url 'listar_compras' %}">Compra</a></li>
                    <li class="nav-item"><a class="nav-link" href="{% url 'listar_categorias' %}">Categoría</a></li>
                    <li class="nav-item"><a class="nav-link" href="{% url 'reporte_ventas' %}">Informe de Ventas</a></li>
                    <li class="nav-item"><a class="nav-link" href="{% url 'reporte_compras' %}">Informe de Compras</a></li> 
-                   <li class="nav-item"><a class="nav-link" href="{% url 'informe_ventas' %}">Ventas Pendientes</a></li>                   
+                   <li class="nav-item"><a class="nav-link" href="{% url 'informe_ventas' %}">Ventas Pendientes</a></li>                    
+                   <a href="{% url 'balance_anual' %}" class="btn btn-primary">Balance Anual</a>
+                   
+                 
                    <li class="nav-item">
                        <form method="POST" action="{% url 'logout' %}">
                            {% csrf_token %}

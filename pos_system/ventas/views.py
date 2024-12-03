@@ -38,7 +38,6 @@ from .forms import (
 from .models import CategoriaProducto, Compra, DetalleVenta, Producto, Venta
 
 
-
 # VISTAS ESPECIALES Y DE LOGIN
 # Decorador personalizado para verificar si es administrador
 def admin_required(view_func):
@@ -550,29 +549,29 @@ def generar_reporte_compras(request):
 
             # Encabezado
             p.setFont("Helvetica-Bold", 16)
-            p.drawString(40, 550, "Informe de Compras - Cafetería MDV")
+            p.drawString(60, 550, "Informe de Compras - Cafetería MDV")
             p.setFont("Helvetica", 12)
-            p.drawString(40, 530, f"Desde {fecha_inicio} hasta {fecha_fin}")
+            p.drawString(60, 530, f"Desde {fecha_inicio} hasta {fecha_fin}")
             if destino:
-                p.drawString(40, 510, f"Destino: {destino}")
+                p.drawString(60, 510, f"Destino: {destino}")
 
             # Tabla
             y = 480
             p.setFont("Helvetica-Bold", 10)
-            p.drawString(40, y, "Fecha")
-            p.drawString(120, y, "N° Boleta")
-            p.drawString(200, y, "Destino")
-            p.drawString(300, y, "Detalle")
+            p.drawString(60, y, "Fecha")
+            p.drawString(130, y, "N° Boleta")
+            p.drawString(220, y, "Destino")
+            p.drawString(360, y, "Detalle")
             p.drawString(600, y, "Total")
             y -= 20
 
             # Contenido de la tabla
             p.setFont("Helvetica", 10)
             for compra in compras:
-                p.drawString(40, y, compra.fecha.strftime('%d-%m-%Y'))
-                p.drawString(120, y, compra.numero_boleta)
-                p.drawString(200, y, compra.destino if compra.destino else "N/A")
-                p.drawString(300, y, compra.detalle)
+                p.drawString(60, y, compra.fecha.strftime('%d-%m-%Y'))
+                p.drawString(130, y, compra.numero_boleta)
+                p.drawString(220, y, compra.destino if compra.destino else "N/A")
+                p.drawString(360, y, compra.detalle)
                 p.drawString(600, y, "{:,.0f}".format(compra.total).replace(',', '.'))
                 y -= 15
 
@@ -637,3 +636,72 @@ def generar_reporte_ventas(request):
     else:
         form = ReporteVentaForm()
     return render(request, 'ventas/reporte_ventas.html', {'form': form})
+
+
+#balance anual
+
+from datetime import datetime
+from django.shortcuts import render
+from django.db.models import Sum
+
+def balance_anual(request):
+    if request.method == 'POST':
+        # Validar el año recibido
+        try:
+            year = int(request.POST.get('year'))
+        except (TypeError, ValueError):
+            year = None
+
+        if year is None or year < 2000 or year > datetime.now().year:
+            return render(request, 'balance_form.html', {
+                'years': list(range(datetime.now().year, 2000, -1)),
+                'error': 'Año inválido. Por favor, selecciona un año válido.',
+            })
+
+        # Obtener ventas y compras agrupadas por mes
+        ventas_mensuales = (
+            Venta.objects.filter(fecha__year=year)
+            .values_list('fecha__month')
+            .annotate(total_ventas=Sum('total'))
+        )
+
+        compras_mensuales = (
+            Compra.objects.filter(fecha__year=year)
+            .values_list('fecha__month')
+            .annotate(total_compras=Sum('total'))
+        )
+
+        # Crear un diccionario con las ventas y compras por mes
+        meses = {i: {'ventas': 0, 'compras': 0, 'saldo': 0} for i in range(1, 13)}
+
+        for venta in ventas_mensuales:
+            mes, total_ventas = venta
+            meses[mes]['ventas'] = total_ventas
+
+        for compra in compras_mensuales:
+            mes, total_compras = compra
+            meses[mes]['compras'] = total_compras
+
+        # Calcular el saldo mensual y los totales anuales
+        for valores in meses.values():
+            valores['saldo'] = valores['ventas'] - valores['compras']
+
+        total_ventas_anuales = sum(valores['ventas'] for valores in meses.values())
+        total_compras_anuales = sum(valores['compras'] for valores in meses.values())
+        saldo_anual = total_ventas_anuales - total_compras_anuales
+
+        context = {
+            'year': year,
+            'meses': meses,
+            'total_ventas_anuales': total_ventas_anuales,
+            'total_compras_anuales': total_compras_anuales,
+            'saldo_anual': saldo_anual,
+        }
+
+        return render(request, 'ventas/balance_anual.html', context)
+
+    else:
+        # Preparar el formulario para seleccionar el año
+        current_year = datetime.now().year
+        years = list(range(current_year, 2000, -1))
+        return render(request, 'ventas/balance_form.html', {'years': years})

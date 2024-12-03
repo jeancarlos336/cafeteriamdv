@@ -16,7 +16,8 @@ SECRET_KEY = os.getenv("SECRET_KEY", "your-default-secret-key")
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
 # Hosts permitidos dinámicos
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1,34.207.251.13").split(",")
+#ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1,10.201.71.215").split(",")
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "10.201.71.215"]
 
 # Application definition
 INSTALLED_APPS = [
