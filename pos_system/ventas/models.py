@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+
 # Modelo para la categoría de productos
 class CategoriaProducto(models.Model):
     id_categoria = models.AutoField(primary_key=True)
@@ -29,6 +30,7 @@ class Producto(models.Model):
     def __str__(self):
         return self.nom_producto
 
+
 # Modelo para las ventas
 class Venta(models.Model):
     id_venta = models.AutoField(primary_key=True)
@@ -38,8 +40,8 @@ class Venta(models.Model):
     vendedor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     estado = models.CharField(
         max_length=10,
-        choices=[('Pagado', 'Pagado'), ('Pendiente', 'Pendiente')],
-        default='Pagado'
+        choices=[("Pagado", "Pagado"), ("Pendiente", "Pendiente")],
+        default="Pagado",
     )
 
     class Meta:
@@ -65,43 +67,48 @@ class DetalleVenta(models.Model):
 
     def __str__(self):
         return f"{self.cantidad} de {self.id_producto} en Venta {self.id_venta}"
-    
-    #def save(self, *args, **kwargs):
-     #   self.sub_total = self.cantidad * self.precio_unitario
-      #  super().save(*args, **kwargs)
-    
-    
+
+    # def save(self, *args, **kwargs):
+    #   self.sub_total = self.cantidad * self.precio_unitario
+    #  super().save(*args, **kwargs)
+
+
 from django.forms import inlineformset_factory
+
 
 def crear_venta(request):
     DetalleVentaFormSet = inlineformset_factory(
-        Venta, DetalleVenta, fields=['id_producto', 'cantidad'], extra=1
+        Venta, DetalleVenta, fields=["id_producto", "cantidad"], extra=1
     )
-    
-    if request.method == 'POST':
+
+    if request.method == "POST":
         form_venta = VentaForm(request.POST)
         formset_detalles = DetalleVentaFormSet(request.POST)
 
         if form_venta.is_valid() and formset_detalles.is_valid():
             venta = form_venta.save()
             detalles = formset_detalles.save(commit=False)
-            
+
             for detalle in detalles:
                 detalle.id_venta = venta
-                detalle.precio_unitario = detalle.id_producto.precio  # Tomamos el precio del producto
+                detalle.precio_unitario = (
+                    detalle.id_producto.precio
+                )  # Tomamos el precio del producto
                 detalle.sub_total = detalle.precio_unitario * detalle.cantidad
                 detalle.save()
-                
-            return redirect('listar_ventas')
+
+            return redirect("listar_ventas")
 
     else:
         form_venta = VentaForm()
         formset_detalles = DetalleVentaFormSet()
 
-    return render(request, 'ventas/crear_venta.html', {
-        'form_venta': form_venta,
-        'formset_detalles': formset_detalles
-    })
+    return render(
+        request,
+        "ventas/crear_venta.html",
+        {"form_venta": form_venta, "formset_detalles": formset_detalles},
+    )
+
 
 class Compra(models.Model):
     fecha = models.DateField()
@@ -112,4 +119,3 @@ class Compra(models.Model):
 
     def __str__(self):
         return f"Compra {self.numero_boleta} - {self.destino}"
-    
