@@ -1,0 +1,16 @@
+{% extends 'ventas/base.html' %}
+{% load static %}
+{% block content %}
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <div class="container">
+        <h1>Actualizar Estado de Venta</h1>
+        
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                {{ form.as_p }}
+            </div>
+            <button type="submit" class="btn btn-primary">Guardar</button>
+        </form>        
+    </div>
+{% endblock %}

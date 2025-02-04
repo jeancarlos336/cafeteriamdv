@@ -1,0 +1,71 @@
+{% extends 'ventas/base.html' %}
+{% load humanize %}
+
+{% block title %}Informe de Ventas{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center mb-4">Informe de Ventas Pendientes</h1>
+    
+    <!-- Formulario para filtros -->
+    <form method="POST" action="{% url 'informe_ventas' %}" class="mb-4">
+        {% csrf_token %}
+        <div class="row">
+            <div class="col-md-4">
+                <label for="fecha_inicio" class="form-label">Fecha Inicio</label>
+                <input type="date" id="fecha_inicio" name="fecha_inicio" class="form-control">
+            </div>
+            <div class="col-md-4">
+                <label for="fecha_termino" class="form-label">Fecha Término</label>
+                <input type="date" id="fecha_termino" name="fecha_termino" class="form-control">
+            </div>
+            <div class="col-md-4">
+                <label for="cliente" class="form-label">Cliente</label>
+                <input type="text" id="cliente" name="cliente" class="form-control" placeholder="Nombre del cliente">
+            </div>
+        </div>
+        <div class="text-center mt-4">
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+            <a href="{% url 'informe_ventas' %}" class="btn btn-secondary">Limpiar Filtros</a>
+        </div>
+    </form>
+    
+    <!-- Resultados de la consulta -->
+    {% if ventas %}
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Boleta</th>
+                <th>Fecha</th>
+                <th>Cliente</th>
+                <th>Estado</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for venta in ventas %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ venta.id_venta }}</td>
+                <td>{{ venta.fecha }}</td>
+                <td>{{ venta.cliente }}</td>
+                <td>{{ venta.estado }}</td>
+                <td>{{ venta.total|floatformat:0|intcomma }}</td>
+            </tr>
+            {% endfor %}
+            <tr>
+                <td colspan="4" class="text-end"><strong>Total General:</strong></td>
+                <td><strong>${{ ventas_total|floatformat:0|intcomma }}</strong></td>
+            </tr>
+        </tbody>
+    </table>
+    {% else %}
+    <div class="alert alert-info text-center" role="alert">
+        No se encontraron resultados para los filtros seleccionados.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+

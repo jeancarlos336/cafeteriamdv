@@ -1,0 +1,45 @@
+{% extends 'ventas/base.html' %}
+{% load humanize %}
+{% block content %}
+<div class="container mt-5">
+    <h2>Resultado del Informe de Ventas</h2>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            Resumen
+        </div>
+        <div class="card-body">
+            <p>Período: {{ fecha_inicio }} al {{ fecha_fin }}</p>
+            {% if vendedor_seleccionado %}
+                <p>Vendedor: {{ vendedor_seleccionado.username }}</p>
+            {% else %}
+                <p>Todos los vendedores</p>
+            {% endif %}
+            <p>Total de ventas: ${{ total_ventas|floatformat:0|intcomma }}</p>
+            <p>Cantidad de ventas: {{ cantidad_ventas }}</p>
+        </div>
+    </div>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Cliente</th>
+                <th>Vendedor</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for venta in ventas %}
+            <tr>
+                <td>{{ venta.fecha }}</td>
+                <td>{{ venta.cliente }}</td>
+                <td>{{ venta.vendedor.username }}</td>
+                <td>${{ venta.total|floatformat:0|intcomma }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+

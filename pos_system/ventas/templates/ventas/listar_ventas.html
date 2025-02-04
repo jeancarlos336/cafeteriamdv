@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Sistema de Ventas</title>
+    {% load static %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/styles2.css' %}">
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1 class="header-title">Sistema de Ventas</h1>
+            <div class="nav-buttons">
+                <a href="{% url 'crear_venta_completa' %}" class="nav-button">
+                    <i class="fas fa-plus"></i>
+                    Nueva Venta
+                </a>
+                <a href="{% url 'dashboard' %}" class="nav-button">
+                    <i class="fas fa-home"></i>
+                    Inicio
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <div class="content-container">
+        <div class="table-container">
+            <div class="table-header">
+                <h2 class="table-title">Registro de Ventas</h2>
+                <form method="get" action="{% url 'listar_ventas' %}" class="search-form">
+                    <div class="input-group mb-3">
+                        <input type="text" name="search" class="form-control" placeholder="Buscar ventas..." value="{{ search_query }}">
+                        <button type="submit" class="btn btn-primary">Buscar</button>
+                    </div>
+                </form>
+            </div>
+                <!-- Bloque para mostrar mensajes -->
+            <div class="container mt-4">
+                {% if messages %}
+                    <div>
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Fecha</th>
+                        <th>Cliente</th>
+                        <th>Total</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for venta in ventas %}
+                    <tr>
+                        <td>{{ venta.id_venta }}</td>
+                        <td>{{ venta.fecha|date:"d-m-Y" }}</td>
+                        <td>{{ venta.cliente }}</td>
+                        <td>${{ venta.total|floatformat:0 }}</td>
+                        <td>{{ venta.estado }}</td>                       
+                        <td>
+                            <div class="action-buttons">
+                                <a href="{% url 'ver_detalle_venta' venta.id_venta %}" class="btn btn-view" title="Ver Detalle">
+                                    <i class="fas fa-eye"></i>
+                                </a> 
+                                <a href="{% url 'actualizar_venta' venta.pk %}" class="btn btn-edit" title="Actualizar estado Venta">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </a>                          
+                                                        
+                                <button class="btn btn-delete" title="Eliminar" onclick="confirmarEliminacion({{ venta.id_venta }})">
+                                    <i class="fas fa-trash"></i>
+                                </button>                               
+                                <!-- Reemplaza el botón de imprimir PDF actual con este -->
+                                <a href="#" class="btn btn-print" title="Imprimir Boleta" onclick="imprimirBoleta({{ venta.id_venta }})">
+                                    <i class="fas fa-print"></i>
+                                </a>
+
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <nav aria-label="Page navigation">
+                <ul class="pagination">
+                    {% if ventas.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?search={{ search_query }}&page={{ ventas.previous_page_number }}">Anterior</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Anterior</span>
+                    </li>
+                    {% endif %}
+            
+                    {% for num in page_range %}
+                        {% if num == '...' %}
+                        <li class="page-item disabled">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                        {% else %}
+                        <li class="page-item {% if ventas.number == num|add:'0' %}active{% endif %}">
+                            <a class="page-link" href="?search={{ search_query }}&page={{ num }}">{{ num }}</a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+            
+                    {% if ventas.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?search={{ search_query }}&page={{ ventas.next_page_number }}">Siguiente</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Siguiente</span>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+
+    <!-- Modal de confirmación de eliminación -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">Confirmar Eliminación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    ¿Está seguro que desea eliminar esta venta?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="confirmDelete">Eliminar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://printjs-4de6.kxcdn.com/print.min.js"></script>
+<link href="https://printjs-4de6.kxcdn.com/print.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://printjs-4de6.kxcdn.com/print.min.css">
+<script src="{% static 'js/main.js' %}"></script>
+
+</body>
+</html>

@@ -1,0 +1,119 @@
+{% extends 'ventas/base.html' %}
+
+{% block title %}Categorias{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Título principal -->
+    <h1 class="text-center mb-4">Categorias</h1>
+    
+    <!-- Botones de navegación -->
+    <div class="d-flex justify-content-between mb-3">
+        <a href="{% url 'crear_categoria' %}" class="btn btn-success">Crear Categoria</a>
+        <a href="{% url 'dashboard' %}" class="btn btn-secondary">Home</a>
+    </div>
+    
+    <!-- Formulario de búsqueda -->
+    <div class="table-container mb-3">
+        <form method="get" action="{% url 'listar_categorias' %}" class="search-form">
+            <div class="input-group mb-3">
+                <input type="text" name="search" class="form-control" placeholder="Buscar Categorias..." value="{{ search_query }}">
+                <button type="submit" class="btn btn-primary">Buscar</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Tabla de productos -->
+    <div class="table-container">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Categorias</th>
+                    
+                </tr>
+            </thead>
+            <tbody>
+                {% for categoria in categoria %}
+                    <tr>
+                        <td>{{ categoria.id_categoria }}</td>
+                        <td>{{ categoria.nomb_categoria }}</td>
+                        
+                        <td>
+                            <div class="action-button">
+                                <a href="{% url 'actualizar_categoria' categoria.id_categoria %}" class="btn btn-primary btn-sm">Actualizar</a>
+                                <button type="button" class="btn btn-danger btn-sm" onclick="confirmarEliminacion({{ categoria.id_categoria }})">
+                                    Eliminar
+                                </button>
+
+                            </div>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center">No hay Categorias disponibles.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Paginación -->
+        <nav aria-label="Page navigation">
+            <ul class="pagination">
+                {% if categoria.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?search={{ search_query }}&page={{ categoria.previous_page_number }}">Anterior</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+                {% endif %}
+                {% for num in categoria.paginator.page_range %}
+                    <li class="page-item {% if categoria.number == num %}active{% endif %}">
+                        <a class="page-link" href="?search={{ search_query }}&page={{ num }}">{{ num }}</a>
+                    </li>
+                {% endfor %}
+                {% if categoria.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?search={{ search_query }}&page={{ categoria.next_page_number }}">Siguiente</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">Siguiente</span></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<!-- Modal de confirmación de eliminación -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirmar Eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                ¿Está seguro que desea eliminar esta Categoria?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <!-- Botón de confirmación -->
+                <a href="#" class="btn btn-danger" id="confirmDelete">Eliminar</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    function confirmarEliminacion(categoriaId) {
+        // Construye la URL con el ID del producto
+        const deleteUrl = `/categorias/eliminar/${categoriaId}/`;
+        // Establece el enlace en el botón del modal
+        document.getElementById('confirmDelete').href = deleteUrl;
+        // Muestra el modal
+        const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        modal.show();
+    }    
+</script>
+{% endblock %}

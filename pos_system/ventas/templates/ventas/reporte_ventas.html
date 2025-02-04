@@ -1,0 +1,30 @@
+{% extends 'ventas/base.html' %}
+{% block content %}
+<div class="container mt-5">
+    <h2>Generar Informe de Ventas</h2>
+    <form method="post">
+        {% csrf_token %}
+        <div class="row">
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label for="id_fecha_inicio">Fecha de inicio:</label>
+                    {{ form.fecha_inicio }}
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label for="id_fecha_fin">Fecha de fin:</label>
+                    {{ form.fecha_fin }}
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label for="id_vendedor">Vendedor (opcional):</label>
+                    {{ form.vendedor }}
+                </div>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Generar Reporte</button>
+    </form>
+</div>
+{% endblock %}

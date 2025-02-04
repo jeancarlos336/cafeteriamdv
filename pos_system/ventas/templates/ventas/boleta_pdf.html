@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page {
+            size: 80mm 297mm; /* Cambiado de A5 a 80mm */
+            margin: 0;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 2mm; /* Reducido de 1cm a 2mm */
+            text-align: center;
+            font-size: 11pt; /* Reducido de 14pt a 11pt */
+            width: 76mm; /* Añadido para control de ancho */
+        }
+        .total {
+            text-align: right;
+            margin-right: 2mm; /* Reducido de 1cm a 2mm */
+        }
+        .producto {
+            text-align: left; /* Cambiado de center a left */
+            width: 40%;
+        }
+        .cantidad, .precio, .subtotal {
+            text-align: right;
+            width: 20%;
+        }
+        .titulo {
+            font-size: 16px; /* Reducido de 20px a 16px */
+            font-weight: bold;
+        }
+        .fecha {
+            text-align: center;
+        }
+        h1, h2, h3, p {
+            font-size: 12pt; /* Reducido de 16pt a 12pt */
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 2mm; /* Reducido de 8px a 2mm */
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        /* Añadido formato de números */
+        .numero {
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    {% load humanize %}
+    <h1 class="titulo">CAFETERIA MDV</h1>
+    <p><strong>Número de Comprobante: {{ venta.id_venta }}</strong></p>
+    <p><strong>Cliente: {{ venta.cliente }}</strong></p>
+    <p><strong>Estado: {{ venta.estado }}</strong></p>
+    <p class="fecha">Fecha: {{ venta.fecha|date:"d-m-Y" }}</p>
+    <table width="100%" style="margin-top: 2mm;"> <!-- Reducido de 1cm a 2mm -->
+        <thead>
+            <tr>
+                <th class="producto">Producto</th>
+                <th class="cantidad">Cant.</th>
+                <th class="precio">P.Unit</th>
+                <th class="subtotal">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for detalle in detalles %}
+            <tr>
+                <td class="producto">{{ detalle.id_producto.nom_producto }}</td>
+                <td class="cantidad">{{ detalle.cantidad }}</td>
+                <td class="precio">$ {{ detalle.precio_unitario|floatformat:0|intcomma }}</td>
+                <td class="subtotal">$ {{ detalle.sub_total|floatformat:0|intcomma }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <h3 class="total">Total: $ {{ venta.total|floatformat:0|intcomma }}</h3>
+</body>
+</html>

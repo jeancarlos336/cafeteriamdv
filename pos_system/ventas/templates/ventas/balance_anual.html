@@ -1,0 +1,36 @@
+{% extends 'ventas/base.html' %}
+{% load humanize %}
+{% block content %}
+<div class="container mt-4">
+    <h1 class="text-center">Balance Anual {{ year }}</h1>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Mes</th>
+                <th>Total Ventas</th>
+                <th>Total Compras</th>
+                <th>Saldo Mensual</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for mes, valores in meses.items %}
+            <tr>
+                <td>{{ mes }}</td>
+                <td>{{ valores.ventas|floatformat:0|intcomma }}</td>
+                <td>{{ valores.compras|floatformat:0|intcomma }}</td>
+                <td>{{ valores.saldo|floatformat:0|intcomma }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <th>Total Anual</th>
+                <th>{{ total_ventas_anuales|floatformat:0|intcomma }}</th>
+                <th>{{ total_compras_anuales|floatformat:0|intcomma }}</th>
+                <th>{{ saldo_anual|floatformat:0|intcomma }}</th>
+            </tr>
+        </tfoot>
+    </table>
+    <a href="{% url 'balance_anual' %}" class="btn btn-secondary">Seleccionar Otro Año</a>
+</div>
+{% endblock %}
